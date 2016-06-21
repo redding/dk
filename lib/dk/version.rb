@@ -1,0 +1,3 @@
+module Dk
+  VERSION = "0.0.1"
+end
