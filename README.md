@@ -1,6 +1,8 @@
 # Dk
 
-TODO: Write a gem description
+"Why'd you name this repo dk?" "Don't know"
+
+This is some automated task runner thingy ala cap/rake (except without all the drama, breaking changes and difficult-to-test-ness).  You define tasks using classes; these tasks do stuff (maybe run some local or remote system commands?); you write tests for these tasks; you run them with a CLI.
 
 ## Usage
 
