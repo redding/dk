@@ -2,18 +2,15 @@ module Dk
 
   class Runner
 
-    attr_reader :task_class, :task, :params
+    attr_reader :params
 
-    def initialize(task_class, args = nil)
+    def initialize(args = nil)
       args ||= {}
       @params = Hash.new{ |h, k| raise ArgumentError, "no param named `#{k}`" }
       @params.merge!(args[:params] || {})
-
-      @task_class = task_class
-      @task = @task_class.new(self)
     end
 
-    def run
+    def run(task_class, params = nil)
       raise NotImplementedError
     end
 
