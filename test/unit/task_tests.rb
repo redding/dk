@@ -36,10 +36,10 @@ module Dk::Task
   class InitTests < UnitTests
     desc "when init"
     setup do
-      @runner = Dk::Runner.new(@task_class, {
+      @runner = Dk::Runner.new({
         :params => { Factory.string => Factory.string }
       })
-      @task = @runner.task
+      @task = @task_class.new(@runner)
     end
     subject{ @task }
 
@@ -49,6 +49,19 @@ module Dk::Task
       assert_raises NotImplementedError do
         subject.run!
       end
+    end
+
+    should "run other tasks by calling the runner's run method" do
+      runner_run_called_with = nil
+      Assert.stub(@runner, :run){ |*args| runner_run_called_with = args }
+
+      other_task_class  = Class.new{ include Dk::Task }
+      other_task_params = { Factory.string => Factory.string }
+
+      subject.instance_eval{ run_task(other_task_class, other_task_params) }
+
+      exp = [other_task_class, other_task_params]
+      assert_equal exp, runner_run_called_with
     end
 
   end

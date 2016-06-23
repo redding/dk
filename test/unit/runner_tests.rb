@@ -17,18 +17,12 @@ class Dk::Runner
   class InitTests < UnitTests
     desc "when init"
     setup do
-      @task_class = TestTask
-      @runner = @runner_class.new(@task_class)
+      @runner = @runner_class.new
     end
     subject{ @runner }
 
-    should have_readers :task_class, :task, :params
+    should have_readers :params
     should have_imeths :run
-
-    should "know its task class and task" do
-      assert_equal @task_class, subject.task_class
-      assert_instance_of @task_class, subject.task
-    end
 
     should "default its attrs" do
       assert_equal({}, subject.params)
@@ -38,9 +32,9 @@ class Dk::Runner
       args = {
         :params => { Factory.string => Factory.string }
       }
-      runner = @runner_class.new(@task_class, args)
+      runner = @runner_class.new(args)
 
-      assert_equal args[:params],  runner.params
+      assert_equal args[:params], runner.params
     end
 
     should "use params that complain when accessing missing keys" do
@@ -52,7 +46,7 @@ class Dk::Runner
     end
 
     should "not implement its run method" do
-      assert_raises(NotImplementedError){ subject.run }
+      assert_raises(NotImplementedError){ subject.run(TestTask) }
     end
 
   end

@@ -40,6 +40,10 @@ module Dk
         @dk_runner.params[key] = value
       end
 
+      def run_task(task_class, params = nil)
+        @dk_runner.run(task_class, params)
+      end
+
     end
 
     module ClassMethods
