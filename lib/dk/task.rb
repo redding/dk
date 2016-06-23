@@ -34,10 +34,12 @@ module Dk
 
       # Helpers
 
-      def params; @dk_params; end
+      def params
+        @dk_params
+      end
 
       def set_param(key, value)
-        @dk_runner.params[key] = value
+        @dk_runner.set_param(key, value)
       end
 
       def run_task(task_class, params = nil)

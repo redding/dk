@@ -85,13 +85,24 @@ module Dk::Task
       @task_params = { Factory.string => Factory.string }
     end
 
-    should "call to the runner for its params" do
+    should "call to the runner for `params`" do
       p = @runner.params.keys.first
       assert_equal @runner.params[p], subject.instance_eval{ params[p] }
 
       assert_raises(ArgumentError) do
         subject.instance_eval{ params[Factory.string] }
       end
+    end
+
+    should "call to the runner for `set_param`" do
+      set_param_called_with = nil
+      Assert.stub(@runner, :set_param){ |*args| set_param_called_with = args }
+
+      key, value = Factory.string, Factory.string
+      subject.instance_eval{ set_param(key, value) }
+
+      exp = [key, value]
+      assert_equal exp, set_param_called_with
     end
 
     should "merge any given task params" do
