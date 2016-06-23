@@ -13,6 +13,13 @@ module Dk
 
     module InstanceMethods
 
+      def initialize(runner, params = nil)
+        params ||= {}
+        @dk_runner = runner
+        @dk_params = Hash.new{ |h, k| @dk_runner.params[k] }
+        @dk_params.merge!(params)
+      end
+
       def dk_run
         # self.dk_run_callbacks 'before_run'
         self.run!
@@ -21,6 +28,16 @@ module Dk
 
       def run!
         raise NotImplementedError
+      end
+
+      private
+
+      # Helpers
+
+      def params; @dk_params; end
+
+      def set_param(key, value)
+        @dk_runner.params[key] = value
       end
 
     end
