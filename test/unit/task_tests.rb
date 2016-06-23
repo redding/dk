@@ -2,6 +2,7 @@ require 'assert'
 require 'dk/task'
 
 require 'much-plugin'
+require 'dk/runner'
 
 module Dk::Task
 
@@ -35,7 +36,10 @@ module Dk::Task
   class InitTests < UnitTests
     desc "when init"
     setup do
-      @task = @task_class.new
+      @runner = Dk::Runner.new(@task_class, {
+        :params => { Factory.string => Factory.string }
+      })
+      @task = @runner.task
     end
     subject{ @task }
 
@@ -59,6 +63,54 @@ module Dk::Task
 
     should "call `run!`" do
       assert_true @task_run_called
+    end
+
+  end
+
+  class ParamsPrivateHelpersTests < InitTests
+    setup do
+      @task_params = { Factory.string => Factory.string }
+    end
+
+    should "call to the runner for its params" do
+      p = @runner.params.keys.first
+      assert_equal @runner.params[p], subject.instance_eval{ params[p] }
+
+      assert_raises(ArgumentError) do
+        subject.instance_eval{ params[Factory.string] }
+      end
+    end
+
+    should "merge any given task params" do
+      task_w_params = @task_class.new(@runner, @task_params)
+
+      p = @runner.params.keys.first
+      assert_equal @runner.params[p], task_w_params.instance_eval{ params[p] }
+
+      p = @task_params.keys.first
+      assert_equal @task_params[p], task_w_params.instance_eval{ params[p] }
+
+      assert_raises(ArgumentError) do
+        task_w_params.instance_eval{ params[Factory.string] }
+      end
+    end
+
+    should "only write task params and not write runner params" do
+      p   = Factory.string
+      val = Factory.string
+      subject.instance_eval{ params[p] = val }
+
+      assert_equal val, subject.instance_eval{ params[p] }
+      assert_raises(ArgumentError){ @runner.params[p] }
+    end
+
+    should "set a runner (and task) param using `set_param`" do
+      p   = Factory.string
+      val = Factory.string
+      subject.instance_eval{ set_param(p, val) }
+
+      assert_equal val, subject.instance_eval{ params[p] }
+      assert_equal val, @runner.params[p]
     end
 
   end
