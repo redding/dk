@@ -10,8 +10,14 @@ module Dk
       @params.merge!(normalize_params(args[:params]))
     end
 
+    # called by CLI on top-level tasks
     def run(task_class, params = nil)
-      raise NotImplementedError
+      build_and_run_task(task_class, params)
+    end
+
+    # called by other tasks on sub-tasks
+    def run_task(task_class, params = nil)
+      build_and_run_task(task_class, params)
     end
 
     def set_param(key, value)
@@ -19,6 +25,10 @@ module Dk
     end
 
     private
+
+    def build_and_run_task(task_class, params = nil)
+      task_class.new(self, params).tap(&:dk_run)
+    end
 
     def normalize_params(params)
       StringifyParams.new(params || {})

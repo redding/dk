@@ -62,12 +62,38 @@ class Dk::Runner
       assert_raises(ArgumentError){ subject.params[key] }
     end
 
-    should "not implement its run method" do
-      assert_raises(NotImplementedError){ subject.run(TestTask) }
+    should "build and run a given task class" do
+      params = { Factory.string => Factory.string }
+
+      task = subject.run(TestTask)
+      assert_true task.run_called
+      assert_equal Hash.new, task.run_params
+
+      task = subject.run(TestTask, params)
+      assert_true task.run_called
+      assert_equal params, task.run_params
+
+      task = subject.run_task(TestTask)
+      assert_true task.run_called
+      assert_equal Hash.new, task.run_params
+
+      task = subject.run_task(TestTask, params)
+      assert_true task.run_called
+      assert_equal params, task.run_params
     end
 
   end
 
-  TestTask = Class.new{ include Dk::Task }
+  class TestTask
+    include Dk::Task
+
+    attr_reader :run_called, :run_params
+
+    def run!
+      @run_called = true
+      @run_params = params
+    end
+
+  end
 
 end

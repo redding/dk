@@ -43,7 +43,7 @@ module Dk
       end
 
       def run_task(task_class, params = nil)
-        @dk_runner.run(task_class, params)
+        @dk_runner.run_task(task_class, params)
       end
 
     end

@@ -51,9 +51,9 @@ module Dk::Task
       end
     end
 
-    should "run other tasks by calling the runner's run method" do
-      runner_run_called_with = nil
-      Assert.stub(@runner, :run){ |*args| runner_run_called_with = args }
+    should "run other tasks by calling the runner's `run_task` method" do
+      runner_run_task_called_with = nil
+      Assert.stub(@runner, :run_task){ |*args| runner_run_task_called_with = args }
 
       other_task_class  = Class.new{ include Dk::Task }
       other_task_params = { Factory.string => Factory.string }
@@ -61,7 +61,7 @@ module Dk::Task
       subject.instance_eval{ run_task(other_task_class, other_task_params) }
 
       exp = [other_task_class, other_task_params]
-      assert_equal exp, runner_run_called_with
+      assert_equal exp, runner_run_task_called_with
     end
 
   end
