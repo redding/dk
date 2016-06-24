@@ -29,8 +29,20 @@ class Dk::TestRunner
     desc "when init"
     setup do
       @runner = @runner_class.new
+      @runner.task_class = TestTask
     end
     subject{ @runner }
+
+    should have_accessors :task_class
+    should have_imeths :task
+
+    should "know how to build a task of its task class" do
+      params = { Factory.string => Factory.string }
+      task = subject.task(params)
+
+      assert_instance_of subject.task_class, task
+      assert_equal params, task.instance_eval{ params }
+    end
 
   end
 
@@ -38,7 +50,7 @@ class Dk::TestRunner
     desc "and run"
     setup do
       @params = { Factory.string => Factory.string }
-      @task = @runner.run(TestTask, @params)
+      @task = @runner.run(@params)
     end
     subject{ @task }
 

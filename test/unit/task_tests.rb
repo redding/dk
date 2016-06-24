@@ -34,12 +34,14 @@ module Dk::Task
   end
 
   class InitTests < UnitTests
+    include Dk::Task::TestHelpers
+
     desc "when init"
     setup do
-      @runner = Dk::Runner.new({
+      @runner = test_runner(@task_class, {
         :params => { Factory.string => Factory.string }
       })
-      @task = @task_class.new(@runner)
+      @task = @runner.task
     end
     subject{ @task }
 
@@ -64,6 +66,14 @@ module Dk::Task
       assert_equal exp, runner_run_task_called_with
     end
 
+    should "know if it is equal to another task" do
+      task = @task_class.new(@runner)
+      assert_equal task, subject
+
+      task = Class.new{ include Dk::Task }.new(@runner)
+      assert_not_equal task, subject
+    end
+
   end
 
   class RunTests < InitTests
@@ -71,6 +81,7 @@ module Dk::Task
     setup do
       @task_run_called = false
       Assert.stub(@task, :run!){ @task_run_called = true }
+
       @task.dk_run
     end
 
@@ -135,6 +146,38 @@ module Dk::Task
 
       assert_equal val, subject.instance_eval{ params[p] }
       assert_equal val, @runner.params[p]
+    end
+
+  end
+
+  class TestHelpersTests < UnitTests
+    desc "TestHelpers"
+    setup do
+      @args = {
+        :params => { Factory.string => Factory.string }
+      }
+
+      context_class = Class.new{ include Dk::Task::TestHelpers }
+      @context = context_class.new
+    end
+    subject{ @context }
+
+    should have_imeths :test_runner, :test_task
+
+    should "build a test runner for a given handler class" do
+      runner = subject.test_runner(@task_class, @args)
+
+      assert_kind_of Dk::TestRunner, runner
+      assert_equal @task_class,      runner.task_class
+      assert_equal @args[:params],   runner.params
+    end
+
+    should "return an initialized task instance" do
+      task = subject.test_task(@task_class, @args)
+      assert_kind_of @task_class, task
+
+      exp = subject.test_runner(@task_class, @args).task
+      assert_equal exp, task
     end
 
   end
