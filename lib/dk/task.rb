@@ -30,6 +30,10 @@ module Dk
         raise NotImplementedError
       end
 
+      def ==(other_task)
+        self.class == other_task.class
+      end
+
       private
 
       # Helpers
@@ -55,6 +59,30 @@ module Dk
         @description
       end
       alias_method :desc, :description
+
+    end
+
+    module TestHelpers
+      include MuchPlugin
+
+      plugin_included do
+        require 'dk/test_runner'
+        include InstanceMethods
+      end
+
+      module InstanceMethods
+
+        def test_runner(task_class, args = nil)
+          Dk::TestRunner.new(args).tap do |runner|
+            runner.task_class = task_class
+          end
+        end
+
+        def test_task(task_class, args = nil)
+          test_runner(task_class, args).task
+        end
+
+      end
 
     end
 

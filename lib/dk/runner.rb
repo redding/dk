@@ -27,7 +27,11 @@ module Dk
     private
 
     def build_and_run_task(task_class, params = nil)
-      task_class.new(self, params).tap(&:dk_run)
+      build_task(task_class, params).tap(&:dk_run)
+    end
+
+    def build_task(task_class, params = nil)
+      task_class.new(self, params)
     end
 
     def normalize_params(params)
