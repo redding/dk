@@ -60,6 +60,10 @@ module Dk
         throw :halt
       end
 
+      def log_info(msg);  @dk_runner.log_info(msg);  end
+      def log_debug(msg); @dk_runner.log_debug(msg); end
+      def log_error(msg); @dk_runner.log_error(msg); end
+
     end
 
     module ClassMethods

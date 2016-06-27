@@ -236,6 +236,33 @@ module Dk::Task
 
   end
 
+  class LogPrivateHelpersTests < InitTests
+    setup do
+      @runner_log_info_called_with  = nil
+      Assert.stub(@runner, :log_info){ |*args| @runner_log_info_called_with = args }
+
+      @runner_log_debug_called_with = nil
+      Assert.stub(@runner, :log_debug){ |*args| @runner_log_debug_called_with = args }
+
+      @runner_log_error_called_with = nil
+      Assert.stub(@runner, :log_error){ |*args| @runner_log_error_called_with = args }
+    end
+
+    should "log by calling the runner's log methods" do
+      msg = Factory.string
+
+      subject.instance_eval{ log_info(msg) }
+      assert_equal [msg], @runner_log_info_called_with
+
+      subject.instance_eval{ log_debug(msg) }
+      assert_equal [msg], @runner_log_debug_called_with
+
+      subject.instance_eval{ log_error(msg) }
+      assert_equal [msg], @runner_log_error_called_with
+    end
+
+  end
+
   class TestHelpersTests < UnitTests
     desc "TestHelpers"
     setup do
