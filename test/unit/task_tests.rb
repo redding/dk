@@ -14,6 +14,8 @@ module Dk::Task
     subject{ @task_class }
 
     should have_imeths :description, :desc
+    should have_imeths :before_callbacks, :after_callbacks
+    should have_imeths :before, :after, :prepend_before, :prepend_after
 
     should "use much-plugin" do
       assert_includes MuchPlugin, Dk::Task
@@ -29,6 +31,41 @@ module Dk::Task
       subject.desc exp
       assert_equal exp, subject.description
       assert_equal exp, subject.desc
+    end
+
+    should "know its default callbacks" do
+      assert_equal [], subject.before_callbacks
+      assert_equal [], subject.after_callbacks
+    end
+
+    should "append callbacks" do
+      task_class = Factory.string
+      params     = Factory.string
+
+      subject.before_callbacks << Factory.string
+      subject.before(task_class, params)
+      assert_equal task_class, subject.before_callbacks.last.task_class
+      assert_equal params,     subject.before_callbacks.last.params
+
+      subject.after_callbacks << Factory.string
+      subject.after(task_class, params)
+      assert_equal task_class, subject.after_callbacks.last.task_class
+      assert_equal params,     subject.after_callbacks.last.params
+    end
+
+    should "prepend callbacks" do
+      task_class = Factory.string
+      params     = Factory.string
+
+      subject.before_callbacks << Factory.string
+      subject.prepend_before(task_class, params)
+      assert_equal task_class, subject.before_callbacks.first.task_class
+      assert_equal params,     subject.before_callbacks.first.params
+
+      subject.after_callbacks << Factory.string
+      subject.prepend_after(task_class, params)
+      assert_equal task_class, subject.after_callbacks.first.task_class
+      assert_equal params,     subject.after_callbacks.first.params
     end
 
   end
@@ -79,14 +116,33 @@ module Dk::Task
   class RunTests < InitTests
     desc "and run"
     setup do
-      @task_run_called = false
-      Assert.stub(@task, :run!){ @task_run_called = true }
+      # build a call orders object to pass around to the callback tasks for
+      # shared state call order
+      @call_orders = CallOrders.new
+
+      # build a base runner and task manually so the callback tasks actually
+      # run (b/c the test runner doesn't run callbacks)
+      @runner = Dk::Runner.new({
+        :params => { 'call_orders' => @call_orders }
+      })
+
+      # use this TestTask that has a bunch of callbacks configured so we can
+      # test callback run and call order.  Also this TestTask uses callback
+      # params which will test all the params handling in callbacks and the
+      # task running behavior.
+      @task = TestTask.new(@runner)
 
       @task.dk_run
     end
 
-    should "call `run!`" do
-      assert_true @task_run_called
+    should "call `run!` and run any callback tasks" do
+      assert_equal 1,  @call_orders.prepend_before_call_order
+      assert_equal 2,  @call_orders.first_before_call_order
+      assert_equal 3,  @call_orders.second_before_call_order
+      assert_equal 4,  @call_orders.run_call_order
+      assert_equal 5,  @call_orders.prepend_after_call_order
+      assert_equal 6,  @call_orders.first_after_call_order
+      assert_equal 7,  @call_orders.second_after_call_order
     end
 
   end
@@ -180,6 +236,58 @@ module Dk::Task
       assert_equal exp, task
     end
 
+  end
+
+  class CallOrders
+    attr_reader :first_before_call_order, :second_before_call_order
+    attr_reader :prepend_before_call_order
+    attr_reader :first_after_call_order, :second_after_call_order
+    attr_reader :prepend_after_call_order
+    attr_reader :run_call_order
+
+    def first_before;   @first_before_call_order   = next_call_order; end
+    def second_before;  @second_before_call_order  = next_call_order; end
+    def prepend_before; @prepend_before_call_order = next_call_order; end
+    def first_after;    @first_after_call_order    = next_call_order; end
+    def second_after;   @second_after_call_order   = next_call_order; end
+    def prepend_after;  @prepend_after_call_order  = next_call_order; end
+
+    def run; @run_call_order = next_call_order; end
+
+    private
+
+    def next_call_order
+      @order ||= 0
+      @order += 1
+    end
+  end
+
+  class CallbackTask
+    include Dk::Task
+
+    def run!
+      params['call_orders'].send(params['callback'])
+    end
+  end
+
+  class TestTask
+    include Dk::Task
+
+    attr_reader :first_before_call_order, :second_before_call_order
+    attr_reader :first_after_call_order, :second_after_call_order
+    attr_reader :run_call_order
+
+    before         CallbackTask, 'callback' => 'first_before'
+    before         CallbackTask, 'callback' => 'second_before'
+    prepend_before CallbackTask, 'callback' => 'prepend_before'
+
+    after         CallbackTask, 'callback' => 'first_after'
+    after         CallbackTask, 'callback' => 'second_after'
+    prepend_after CallbackTask, 'callback' => 'prepend_after'
+
+    def run!
+      params['call_orders'].run
+    end
   end
 
 end
