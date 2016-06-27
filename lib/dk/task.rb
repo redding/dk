@@ -21,13 +21,19 @@ module Dk
       end
 
       def dk_run
-        # self.dk_run_callbacks 'before_run'
+        self.dk_run_callbacks 'before'
         self.run!
-        # self.dk_run_callbacks 'after_run'
+        self.dk_run_callbacks 'after'
       end
 
       def run!
         raise NotImplementedError
+      end
+
+      def dk_run_callbacks(named)
+        (self.class.send("#{named}_callbacks") || []).each do |callback|
+          run_task(callback.task_class, callback.params)
+        end
       end
 
       def ==(other_task)
@@ -60,7 +66,28 @@ module Dk
       end
       alias_method :desc, :description
 
+      def before_callbacks; @before_callbacks ||= []; end
+      def after_callbacks;  @after_callbacks  ||= []; end
+
+      def before(task_class, params = nil)
+        self.before_callbacks << Callback.new(task_class, params)
+      end
+
+      def after(task_class, params = nil)
+        self.after_callbacks << Callback.new(task_class, params)
+      end
+
+      def prepend_before(task_class, params = nil)
+        self.before_callbacks.unshift(Callback.new(task_class, params))
+      end
+
+      def prepend_after(task_class, params = nil)
+        self.after_callbacks.unshift(Callback.new(task_class, params))
+      end
+
     end
+
+    Callback = Struct.new(:task_class, :params)
 
     module TestHelpers
       include MuchPlugin
