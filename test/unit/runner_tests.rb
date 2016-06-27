@@ -22,7 +22,7 @@ class Dk::Runner
     subject{ @runner }
 
     should have_readers :params
-    should have_imeths :run, :set_param
+    should have_imeths :run, :run_task, :set_param
 
     should "default its attrs" do
       assert_equal({}, subject.params)
@@ -54,14 +54,6 @@ class Dk::Runner
       assert_equal exp, runner.params
     end
 
-    should "stringify and set param values with `set_param`" do
-      key, value = Factory.string.to_sym, Factory.string
-      subject.set_param(key, value)
-
-      assert_equal value, subject.params[key.to_s]
-      assert_raises(ArgumentError){ subject.params[key] }
-    end
-
     should "build and run a given task class" do
       params = { Factory.string => Factory.string }
 
@@ -80,6 +72,14 @@ class Dk::Runner
       task = subject.run_task(TestTask, params)
       assert_true task.run_called
       assert_equal params, task.run_params
+    end
+
+    should "stringify and set param values with `set_param`" do
+      key, value = Factory.string.to_sym, Factory.string
+      subject.set_param(key, value)
+
+      assert_equal value, subject.params[key.to_s]
+      assert_raises(ArgumentError){ subject.params[key] }
     end
 
   end

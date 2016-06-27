@@ -90,19 +90,6 @@ module Dk::Task
       end
     end
 
-    should "run other tasks by calling the runner's `run_task` method" do
-      runner_run_task_called_with = nil
-      Assert.stub(@runner, :run_task){ |*args| runner_run_task_called_with = args }
-
-      other_task_class  = Class.new{ include Dk::Task }
-      other_task_params = { Factory.string => Factory.string }
-
-      subject.instance_eval{ run_task(other_task_class, other_task_params) }
-
-      exp = [other_task_class, other_task_params]
-      assert_equal exp, runner_run_task_called_with
-    end
-
     should "know if it is equal to another task" do
       task = @task_class.new(@runner)
       assert_equal task, subject
@@ -126,11 +113,11 @@ module Dk::Task
         :params => { 'call_orders' => @call_orders }
       })
 
-      # use this TestTask that has a bunch of callbacks configured so we can
-      # test callback run and call order.  Also this TestTask uses callback
-      # params which will test all the params handling in callbacks and the
-      # task running behavior.
-      @task = TestTask.new(@runner)
+      # use this CallbacksTask that has a bunch of callbacks configured so we
+      # can test callback run and call order.  Also this CallbacksTask uses
+      # callback params which will test all the params handling in callbacks
+      # and the task running behavior.
+      @task = CallbacksTask.new(@runner)
 
       @task.dk_run
     end
@@ -143,6 +130,23 @@ module Dk::Task
       assert_equal 5,  @call_orders.prepend_after_call_order
       assert_equal 6,  @call_orders.first_after_call_order
       assert_equal 7,  @call_orders.second_after_call_order
+    end
+
+  end
+
+  class RunTaskPrivateHelperTests < InitTests
+    setup do
+      @runner_run_task_called_with = nil
+      Assert.stub(@runner, :run_task){ |*args| @runner_run_task_called_with = args }
+    end
+
+    should "run other tasks by calling the runner's `run_task` method" do
+      other_task_class  = Class.new{ include Dk::Task }
+      other_task_params = { Factory.string => Factory.string }
+      subject.instance_eval{ run_task(other_task_class, other_task_params) }
+
+      exp = [other_task_class, other_task_params]
+      assert_equal exp, @runner_run_task_called_with
     end
 
   end
@@ -202,6 +206,32 @@ module Dk::Task
 
       assert_equal val, subject.instance_eval{ params[p] }
       assert_equal val, @runner.params[p]
+    end
+
+  end
+
+  class HaltPrivateHelperTests < InitTests
+    setup do
+      # build a runs object to pass around to the callback tasks for
+      # shared state of what has been run
+      @runs = Runs.new([])
+
+      # build a base runner and task manually so the callback tasks actually
+      # run (b/c the test runner doesn't run callbacks)
+      @runner = Dk::Runner.new({
+        :params => { 'runs' => @runs }
+      })
+
+      # use this HaltTask that has a bunch of callbacks configured so we can
+      # test callback halt handling.
+      @task = HaltTask.new(@runner)
+
+      @task.dk_run
+    end
+
+    should "halt just the run! execution (not the callbacks) with `halt`" do
+      exp = ['first_before', 'run_before_halt', 'second_after']
+      assert_equal exp, @runs.list
     end
 
   end
@@ -270,12 +300,8 @@ module Dk::Task
     end
   end
 
-  class TestTask
+  class CallbacksTask
     include Dk::Task
-
-    attr_reader :first_before_call_order, :second_before_call_order
-    attr_reader :first_after_call_order, :second_after_call_order
-    attr_reader :run_call_order
 
     before         CallbackTask, 'callback' => 'first_before'
     before         CallbackTask, 'callback' => 'second_before'
@@ -287,6 +313,32 @@ module Dk::Task
 
     def run!
       params['call_orders'].run
+    end
+  end
+
+  Runs = Struct.new(:list)
+
+  class HaltCallbackTask
+    include Dk::Task
+
+    def run!
+      halt if params.key?('halt')
+      params['runs'].list << params['run']
+    end
+  end
+
+  class HaltTask
+    include Dk::Task
+
+    before HaltCallbackTask, 'run' => 'first_before'
+    before HaltCallbackTask, 'run' => 'second_before', 'halt' => true
+    after  HaltCallbackTask, 'run' => 'first_after', 'halt' => true
+    after  HaltCallbackTask, 'run' => 'second_after'
+
+    def run!
+      params['runs'].list << 'run_before_halt'
+      halt
+      params['runs'].list << 'run_after_halt'
     end
   end
 
