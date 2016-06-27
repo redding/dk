@@ -22,7 +22,7 @@ module Dk
 
       def dk_run
         self.dk_run_callbacks 'before'
-        self.run!
+        catch(:halt){ self.run! }
         self.dk_run_callbacks 'after'
       end
 
@@ -44,6 +44,10 @@ module Dk
 
       # Helpers
 
+      def run_task(task_class, params = nil)
+        @dk_runner.run_task(task_class, params)
+      end
+
       def params
         @dk_params
       end
@@ -52,8 +56,8 @@ module Dk
         @dk_runner.set_param(key, value)
       end
 
-      def run_task(task_class, params = nil)
-        @dk_runner.run_task(task_class, params)
+      def halt
+        throw :halt
       end
 
     end
