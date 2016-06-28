@@ -1,6 +1,7 @@
 require 'assert'
 require 'dk/runner'
 
+require 'dk/null_logger'
 require 'dk/task'
 
 class Dk::Runner
@@ -17,24 +18,28 @@ class Dk::Runner
   class InitTests < UnitTests
     desc "when init"
     setup do
-      @runner = @runner_class.new
+      @args = {
+        :params => { Factory.string => Factory.string },
+        :logger => Dk::NullLogger.new
+      }
+      @runner = @runner_class.new(@args)
     end
     subject{ @runner }
 
-    should have_readers :params
+    should have_readers :params, :logger
     should have_imeths :run, :run_task, :set_param
-
-    should "default its attrs" do
-      assert_equal({}, subject.params)
-    end
+    should have_imeths :log_info, :log_debug, :log_error
 
     should "know its attrs" do
-      args = {
-        :params => { Factory.string => Factory.string }
-      }
-      runner = @runner_class.new(args)
+      assert_equal @args[:params], subject.params
+      assert_equal @args[:logger], subject.logger
+    end
 
-      assert_equal args[:params], runner.params
+    should "default its attrs" do
+      exp = {}
+      assert_equal exp, @runner_class.new.params
+
+      assert_instance_of Dk::NullLogger, @runner_class.new.logger
     end
 
     should "use params that complain when accessing missing keys" do
@@ -80,6 +85,28 @@ class Dk::Runner
 
       assert_equal value, subject.params[key.to_s]
       assert_raises(ArgumentError){ subject.params[key] }
+    end
+
+    should "call to its logger for its log_* methods" do
+      logger_info_called_with = nil
+      Assert.stub(@args[:logger], :info){ |*args| logger_info_called_with = args }
+
+      logger_debug_called_with = nil
+      Assert.stub(@args[:logger], :debug){ |*args| logger_debug_called_with = args }
+
+      logger_error_called_with = nil
+      Assert.stub(@args[:logger], :error){ |*args| logger_error_called_with = args }
+
+      msg = Factory.string
+
+      subject.log_info msg
+      assert_equal [msg], logger_info_called_with
+
+      subject.log_debug msg
+      assert_equal [msg], logger_debug_called_with
+
+      subject.log_error msg
+      assert_equal [msg], logger_error_called_with
     end
 
   end

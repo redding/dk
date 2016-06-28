@@ -1,13 +1,17 @@
+require 'dk/null_logger'
+
 module Dk
 
   class Runner
 
-    attr_reader :params
+    attr_reader :params, :logger
 
     def initialize(args = nil)
       args ||= {}
       @params = Hash.new{ |h, k| raise ArgumentError, "no param named `#{k}`" }
       @params.merge!(normalize_params(args[:params]))
+
+      @logger = args[:logger] || NullLogger.new
     end
 
     # called by CLI on top-level tasks
@@ -21,8 +25,12 @@ module Dk
     end
 
     def set_param(key, value)
-      @params.merge!(normalize_params({ key => value }))
+      self.params.merge!(normalize_params({ key => value }))
     end
+
+    def log_info(msg);  self.logger.info(msg);  end
+    def log_debug(msg); self.logger.debug(msg); end
+    def log_error(msg); self.logger.error(msg); end
 
     private
 
