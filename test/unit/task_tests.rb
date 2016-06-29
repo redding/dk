@@ -151,6 +151,35 @@ module Dk::Task
 
   end
 
+  class RunLocalCmdPrivateHelpersTests < InitTests
+    setup do
+      @runner_cmd_called_with = nil
+      Assert.stub(@runner, :cmd){ |*args| @runner_cmd_called_with = args }
+
+      @runner_cmd_bang_called_with = nil
+      Assert.stub(@runner, :cmd!){ |*args| @runner_cmd_bang_called_with = args }
+    end
+
+    should "run local cmds by calling the runner's `cmd` methods" do
+      cmd_str  = Factory.string
+      cmd_opts = { Factory.string => Factory.string }
+      subject.instance_eval{ cmd(cmd_str, cmd_opts) }
+
+      exp = [cmd_str, cmd_opts]
+      assert_equal exp, @runner_cmd_called_with
+    end
+
+    should "run local cmds by calling the runner's `cmd!` methods" do
+      cmd_str  = Factory.string
+      cmd_opts = { Factory.string => Factory.string }
+      subject.instance_eval{ cmd!(cmd_str, cmd_opts) }
+
+      exp = [cmd_str, cmd_opts]
+      assert_equal exp, @runner_cmd_bang_called_with
+    end
+
+  end
+
   class ParamsPrivateHelpersTests < InitTests
     setup do
       @task_params = { Factory.string => Factory.string }

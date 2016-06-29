@@ -48,6 +48,14 @@ module Dk
         @dk_runner.run_task(task_class, params)
       end
 
+      def cmd(cmd_str, opts = nil)
+        @dk_runner.cmd(cmd_str, opts)
+      end
+
+      def cmd!(cmd_str, opts = nil)
+        @dk_runner.cmd!(cmd_str, opts)
+      end
+
       def params
         @dk_params
       end
