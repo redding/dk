@@ -9,6 +9,9 @@ require 'pry'
 
 require 'test/support/factory'
 
+# put scmd in test mode
+ENV['SCMD_TEST_MODE'] = '1'
+
 # 1.8.7 backfills
 
 # Array#sample
