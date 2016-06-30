@@ -1,3 +1,4 @@
+require 'dk/local'
 require 'dk/null_logger'
 
 module Dk
@@ -28,9 +29,21 @@ module Dk
       self.params.merge!(normalize_params({ key => value }))
     end
 
-    def log_info(msg);  self.logger.info(msg);  end
-    def log_debug(msg); self.logger.debug(msg); end
-    def log_error(msg); self.logger.error(msg); end
+    def log_info(msg);  self.logger.info(msg);  end # TODO: style up
+    def log_debug(msg); self.logger.debug(msg); end # TODO: style up
+    def log_error(msg); self.logger.error(msg); end # TODO: style up
+
+    def cmd(cmd_str, opts)
+      build_and_log_local_cmd(cmd_str, opts) do |cmd|
+        cmd.run
+      end
+    end
+
+    def cmd!(cmd_str, opts)
+      build_and_log_local_cmd(cmd_str, opts) do |cmd|
+        cmd.run!
+      end
+    end
 
     private
 
@@ -40,6 +53,23 @@ module Dk
 
     def build_task(task_class, params = nil)
       task_class.new(self, params)
+    end
+
+    def build_and_log_local_cmd(cmd_str, opts, &block)
+      log_local_cmd(build_local_cmd(cmd_str, opts), &block)
+    end
+
+    def build_local_cmd(cmd_str, opts)
+      Local::Cmd.new(cmd_str, opts)
+    end
+
+    def log_local_cmd(cmd, &block)
+      self.logger.info(cmd.cmd_str) # TODO: style up
+      block.call(cmd)
+      cmd.output_lines.each do |output_line|
+        self.logger.debug(output_line.line) # TODO: style up, include name
+      end
+      cmd
     end
 
     def normalize_params(params)

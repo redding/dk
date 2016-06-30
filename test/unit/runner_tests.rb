@@ -1,6 +1,7 @@
 require 'assert'
 require 'dk/runner'
 
+require 'dk/local'
 require 'dk/null_logger'
 require 'dk/task'
 
@@ -29,6 +30,7 @@ class Dk::Runner
     should have_readers :params, :logger
     should have_imeths :run, :run_task, :set_param
     should have_imeths :log_info, :log_debug, :log_error
+    should have_imeths :cmd, :cmd!
 
     should "know its attrs" do
       assert_equal @args[:params], subject.params
@@ -107,6 +109,64 @@ class Dk::Runner
 
       subject.log_error msg
       assert_equal [msg], logger_error_called_with
+    end
+
+  end
+
+  class CmdTests < UnitTests
+    desc "running cmds"
+    setup do
+      @cmd_str   = Factory.string
+      @cmd_opts  = { Factory.string => Factory.string}
+      @local_cmd = nil
+
+      @local_cmd_new_called_with = nil
+      Assert.stub(Dk::Local::Cmd, :new) do |*args|
+        @local_cmd_new_called_with = args
+        @local_cmd = Dk::Local::CmdSpy.new(*args).tap do |cmd_spy|
+          cmd_spy.stdout = Factory.stdout
+        end
+      end
+
+      @log_out = ""
+      logger = Logger.new(StringIO.new(@log_out))
+      logger.formatter = proc do |severity, datetime, progname, msg|
+        "#{severity} -- #{msg}\n"
+      end
+      @runner  = @runner_class.new(:logger => logger)
+    end
+    subject{ @runner }
+
+    should "build, log and run local cmds" do
+      @runner.cmd(@cmd_str, @cmd_opts)
+
+      exp = [@cmd_str, @cmd_opts]
+      assert_equal exp, @local_cmd_new_called_with
+
+      assert_not_nil @local_cmd
+      assert_true @local_cmd.run_called?
+
+      assert_equal exp_log_output(@local_cmd), @log_out
+    end
+
+    should "build, log and run! local cmds" do
+      @runner.cmd!(@cmd_str, @cmd_opts)
+
+      exp = [@cmd_str, @cmd_opts]
+      assert_equal exp, @local_cmd_new_called_with
+
+      assert_not_nil @local_cmd
+      assert_true @local_cmd.run_bang_called?
+
+      assert_equal exp_log_output(@local_cmd), @log_out
+    end
+
+    private
+
+    def exp_log_output(cmd)
+      ( ["INFO -- #{cmd.cmd_str}\n"] +
+        cmd.output_lines.map{ |ol| "DEBUG -- #{ol.line}\n" }
+      ).join("")
     end
 
   end
