@@ -59,13 +59,17 @@ class Dk::TestRunner
       assert_equal @params, subject.run_params
     end
 
-    should "capture any sub-tasks that were run but not actually run them" do
+    should "capture any sub-tasks that were run" do
       assert_equal 1, @runner.runs.size
 
-      sub_task_run = @runner.runs.first
-      assert_equal TestTask::SubTask,       sub_task_run.task_class
-      assert_equal subject.sub_task_params, sub_task_run.params
-      assert_equal [],                      sub_task_run.runs
+      st = @runner.runs.first
+
+      assert_instance_of Dk::TaskRun, st
+
+      assert_same st, subject.sub_task
+      assert_equal TestTask::SubTask,       st.task_class
+      assert_equal subject.sub_task_params, st.params
+      assert_equal [],                      st.runs
     end
 
   end
@@ -74,14 +78,17 @@ class Dk::TestRunner
     include Dk::Task
 
     attr_reader :run_called, :run_params
-    attr_reader :sub_task_params
+    attr_reader :sub_task
+
+    def sub_task_params
+      @sub_task_params ||= { Factory.string => Factory.string }
+    end
 
     def run!
       @run_called = true
       @run_params = params
 
-      @sub_task_params = { Factory.string => Factory.string }
-      run_task(SubTask, @sub_task_params)
+      @sub_task = run_task(SubTask, self.sub_task_params)
     end
 
     class SubTask
