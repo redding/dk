@@ -152,30 +152,40 @@ module Dk::Task
   end
 
   class RunLocalCmdPrivateHelpersTests < InitTests
-    setup do
-      @runner_cmd_called_with = nil
-      Assert.stub(@runner, :cmd){ |*args| @runner_cmd_called_with = args }
 
-      @runner_cmd_bang_called_with = nil
-      Assert.stub(@runner, :cmd!){ |*args| @runner_cmd_bang_called_with = args }
-    end
+    should "run local cmds, calling to the runner" do
+      runner_cmd_called_with = nil
+      Assert.stub(@runner, :cmd){ |*args| runner_cmd_called_with = args }
 
-    should "run local cmds by calling the runner's `cmd` methods" do
       cmd_str  = Factory.string
       cmd_opts = { Factory.string => Factory.string }
       subject.instance_eval{ cmd(cmd_str, cmd_opts) }
 
       exp = [cmd_str, cmd_opts]
-      assert_equal exp, @runner_cmd_called_with
+      assert_equal exp, runner_cmd_called_with
     end
 
-    should "run local cmds by calling the runner's `cmd!` methods" do
+    should "run local cmds and error if not successful" do
+      runner_cmd_called_with = nil
+      Assert.stub(@runner, :cmd) do |*args|
+        runner_cmd_called_with = args
+        Assert.stub_send(@runner, :cmd, *args).tap do |cmd_spy|
+          Assert.stub(cmd_spy, :success?){ false }
+        end
+      end
+
       cmd_str  = Factory.string
       cmd_opts = { Factory.string => Factory.string }
-      subject.instance_eval{ cmd!(cmd_str, cmd_opts) }
+
+      err = assert_raises(LocalCmdRunError) do
+        subject.instance_eval{ cmd!(cmd_str, cmd_opts) }
+      end
+
+      exp = "error running: `#{cmd_str}`"
+      assert_equal exp, err.message
 
       exp = [cmd_str, cmd_opts]
-      assert_equal exp, @runner_cmd_bang_called_with
+      assert_equal exp, runner_cmd_called_with
     end
 
   end

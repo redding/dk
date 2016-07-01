@@ -34,15 +34,7 @@ module Dk
     def log_error(msg); self.logger.error(msg); end # TODO: style up
 
     def cmd(cmd_str, opts)
-      build_and_log_local_cmd(cmd_str, opts) do |cmd|
-        cmd.run
-      end
-    end
-
-    def cmd!(cmd_str, opts)
-      build_and_log_local_cmd(cmd_str, opts) do |cmd|
-        cmd.run!
-      end
+      build_and_run_local_cmd(cmd_str, opts)
     end
 
     private
@@ -55,8 +47,8 @@ module Dk
       task_class.new(self, params)
     end
 
-    def build_and_log_local_cmd(cmd_str, opts, &block)
-      log_local_cmd(build_local_cmd(cmd_str, opts), &block)
+    def build_and_run_local_cmd(cmd_str, opts, &block)
+      log_local_cmd(build_local_cmd(cmd_str, opts)){ |cmd| cmd.run }
     end
 
     def build_local_cmd(cmd_str, opts)

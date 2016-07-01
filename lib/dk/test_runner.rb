@@ -25,11 +25,6 @@ module Dk
       super(cmd_str, opts).tap{ |c| self.runs << c }
     end
 
-    # track that a local cmd was run
-    def cmd!(cmd_str, opts)
-      super(cmd_str, opts).tap{ |c| self.runs << c }
-    end
-
     # test task API
 
     def task(params = nil)
