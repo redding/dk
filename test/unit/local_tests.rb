@@ -26,8 +26,13 @@ module Dk::Local
       @cmd = @cmd_class.new(@scmd_spy)
     end
 
+    should have_readers :scmd
     should have_imeths :cmd_str, :run, :run!, :stdout, :stderr, :success?
     should have_imeths :to_s, :output_lines
+
+    should "know its scmd" do
+      assert_equal @scmd_spy, subject.scmd
+    end
 
     should "demeter its scmd" do
       assert_equal @scmd_spy.cmd_str, subject.cmd_str

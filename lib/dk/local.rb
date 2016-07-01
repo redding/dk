@@ -5,6 +5,8 @@ module Dk::Local
 
   class BaseCmd
 
+    attr_reader :scmd
+
     def initialize(scmd_or_spy)
       @scmd = scmd_or_spy
     end
