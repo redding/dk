@@ -82,7 +82,7 @@ class Dk::TestRunner
       assert_same lcb, subject.local_cmd_bang
       assert_equal subject.local_cmd_str,  lcb.cmd_str
       assert_equal subject.local_cmd_opts, lcb.cmd_opts
-      assert_true lcb.run_bang_called?
+      assert_true lcb.run_called?
     end
 
   end
@@ -110,7 +110,6 @@ class Dk::TestRunner
       assert_same @cmd_spy, subject.local_cmd_bang
 
       assert_true @cmd_spy.run_called?
-      assert_true @cmd_spy.run_bang_called?
 
       assert_equal @stdout, subject.local_cmd.stdout
       assert_equal @stdout, subject.local_cmd_bang.stdout

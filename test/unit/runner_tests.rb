@@ -30,7 +30,7 @@ class Dk::Runner
     should have_readers :params, :logger
     should have_imeths :run, :run_task, :set_param
     should have_imeths :log_info, :log_debug, :log_error
-    should have_imeths :cmd, :cmd!
+    should have_imeths :cmd
 
     should "know its attrs" do
       assert_equal @args[:params], subject.params
@@ -145,18 +145,6 @@ class Dk::Runner
 
       assert_not_nil @local_cmd
       assert_true @local_cmd.run_called?
-
-      assert_equal exp_log_output(@local_cmd), @log_out
-    end
-
-    should "build, log and run! local cmds" do
-      @runner.cmd!(@cmd_str, @cmd_opts)
-
-      exp = [@cmd_str, @cmd_opts]
-      assert_equal exp, @local_cmd_new_called_with
-
-      assert_not_nil @local_cmd
-      assert_true @local_cmd.run_bang_called?
 
       assert_equal exp_log_output(@local_cmd), @log_out
     end

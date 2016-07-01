@@ -5,21 +5,24 @@ module Dk::Local
 
   class BaseCmd
 
-    attr_reader :scmd
+    attr_reader :scmd, :cmd_str
 
-    def initialize(scmd_or_spy)
-      @scmd = scmd_or_spy
+    def initialize(scmd_or_spy_klass, cmd_str, opts)
+      opts   ||= {}
+      @scmd    = scmd_or_spy_klass.new(cmd_str, :env => opts[:env])
+      @cmd_str = cmd_str
     end
 
-    def cmd_str; @scmd.cmd_str; end
+    def to_s; self.cmd_str; end
 
-    def run(input = nil);  @scmd.run(input);  self; end
-    def run!(input = nil); @scmd.run!(input); self; end
+    def run(input = nil)
+      @scmd.run(input)
+      self
+    end
 
     def stdout;   @scmd.stdout;   end
     def stderr;   @scmd.stderr;   end
     def success?; @scmd.success?; end
-    def to_s;     @scmd.to_s;     end
 
     def output_lines
       build_stdout_lines(self.stdout) + build_stderr_lines(self.stderr)
@@ -46,8 +49,7 @@ module Dk::Local
   class Cmd < BaseCmd
 
     def initialize(cmd_str, opts = nil)
-      opts ||= {}
-      super(Scmd.new(cmd_str, :env => opts[:env]))
+      super(Scmd, cmd_str, opts)
     end
 
   end
@@ -58,7 +60,7 @@ module Dk::Local
 
     def initialize(cmd_str, opts = nil)
       require 'scmd/command_spy'
-      super(Scmd::CommandSpy.new(cmd_str, opts))
+      super(Scmd::CommandSpy, cmd_str, opts)
       @cmd_opts = opts
     end
 
@@ -66,10 +68,8 @@ module Dk::Local
     def stderr=(value);     @scmd.stderr     = value; end
     def exitstatus=(value); @scmd.exitstatus = value; end
 
-    def run_calls;        @scmd.run_calls;        end
-    def run_bang_calls;   @scmd.run_bang_calls;   end
-    def run_called?;      @scmd.run_called?;      end
-    def run_bang_called?; @scmd.run_bang_called?; end
+    def run_calls;   @scmd.run_calls;   end
+    def run_called?; @scmd.run_called?; end
 
   end
 

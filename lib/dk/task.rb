@@ -53,7 +53,11 @@ module Dk
       end
 
       def cmd!(cmd_str, opts = nil)
-        @dk_runner.cmd!(cmd_str, opts)
+        cmd = @dk_runner.cmd(cmd_str, opts)
+        if !cmd.success?
+          raise LocalCmdRunError, "error running: `#{cmd.cmd_str}`", caller
+        end
+        cmd
       end
 
       def params
@@ -73,6 +77,8 @@ module Dk
       def log_error(msg); @dk_runner.log_error(msg); end
 
     end
+
+    LocalCmdRunError = Class.new(RuntimeError)
 
     module ClassMethods
 

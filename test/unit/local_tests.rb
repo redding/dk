@@ -14,6 +14,18 @@ module Dk::Local
         spy.stdout     = [Factory.stdout, nil].sample
         spy.stderr     = [Factory.stderr, nil].sample
       end
+
+      @scmd_new_called_with = nil
+      Assert.stub(Scmd, :new) do |*args|
+        @scmd_new_called_with = args
+        @scmd_spy
+      end
+
+      @scmd_spy_new_called_with = nil
+      Assert.stub(Scmd::CommandSpy, :new) do |*args|
+        @scmd_spy_new_called_with = args
+        @scmd_spy
+      end
     end
     subject{ @cmd }
 
@@ -23,32 +35,42 @@ module Dk::Local
     desc "BaseCmd"
     setup do
       @cmd_class = Dk::Local::BaseCmd
-      @cmd = @cmd_class.new(@scmd_spy)
+      @opts = {
+        :env           => Factory.string,
+        Factory.string => Factory.string
+      }
+
+      @cmd = @cmd_class.new(Scmd, @cmd_str, @opts)
     end
 
-    should have_readers :scmd
-    should have_imeths :cmd_str, :run, :run!, :stdout, :stderr, :success?
-    should have_imeths :to_s, :output_lines
+    should have_readers :scmd, :cmd_str
+    should have_imeths :to_s, :run, :stdout, :stderr, :success?
+    should have_imeths :output_lines
 
-    should "know its scmd" do
+    should "build an scmd with the cmd str and any given :env option" do
       assert_equal @scmd_spy, subject.scmd
+      assert_equal [@cmd_str, { :env => @opts[:env] }], @scmd_new_called_with
+
+      cmd = @cmd_class.new(Scmd::CommandSpy, @cmd_str, @opts)
+      assert_equal @scmd_spy, cmd.scmd
+      assert_equal [@cmd_str, { :env => @opts[:env] }], @scmd_spy_new_called_with
+    end
+
+    should "know its cmd str" do
+      assert_equal @cmd_str,        subject.cmd_str
+      assert_equal subject.cmd_str, subject.to_s
     end
 
     should "demeter its scmd" do
-      assert_equal @scmd_spy.cmd_str, subject.cmd_str
-
       assert_false @scmd_spy.run_called?
-      subject.run
+      input = Factory.string
+      subject.run(input)
       assert_true @scmd_spy.run_called?
-
-      assert_false @scmd_spy.run_bang_called?
-      subject.run!
-      assert_true @scmd_spy.run_bang_called?
+      assert_equal input, @scmd_spy.run_calls.last.input
 
       assert_equal @scmd_spy.stdout,   subject.stdout
       assert_equal @scmd_spy.stderr,   subject.stderr
       assert_equal @scmd_spy.success?, subject.success?
-      assert_equal @scmd_spy.to_s,     subject.to_s
     end
 
     should "know its output lines" do
@@ -77,24 +99,14 @@ module Dk::Local
     desc "Cmd"
     setup do
       @cmd_class = Dk::Local::Cmd
-
-      @scmd_new_called_with = nil
-      Assert.stub(Scmd, :new) do |*args|
-        @scmd_new_called_with = args
-        @scmd_spy
-      end
-
       @cmd = @cmd_class.new(@cmd_str)
     end
 
-    should "build an scmd with the cmd str and any given :env option" do
+    should "build an scmd with the cmd str and any given options" do
       assert_equal [@cmd_str, { :env => nil }], @scmd_new_called_with
 
-      opts = {
-        :env           => Factory.string,
-        Factory.string => Factory.string
-      }
-      @cmd_class.new(@cmd_str, opts)
+      opts = { :env => Factory.string }
+      cmd  = @cmd_class.new(@cmd_str, opts)
       assert_equal [@cmd_str, { :env => opts[:env] }], @scmd_new_called_with
     end
 
@@ -104,28 +116,20 @@ module Dk::Local
     desc "CmdSpy"
     setup do
       @cmd_class = Dk::Local::CmdSpy
-
-      @scmd_spy_new_called_with = nil
-      Assert.stub(Scmd::CommandSpy, :new) do |*args|
-        @scmd_spy_new_called_with = args
-        @scmd_spy
-      end
-
       @cmd = @cmd_class.new(@cmd_str)
     end
 
     should have_readers :cmd_opts
     should have_imeths :stdout=, :stderr=, :exitstatus=
-    should have_imeths :run_calls, :run_bang_calls
-    should have_imeths :run_called?, :run_bang_called?
+    should have_imeths :run_calls, :run_called?
 
     should "build an scmd spy with the cmd str and any given options" do
-      assert_equal [@cmd_str, nil], @scmd_spy_new_called_with
+      assert_equal [@cmd_str, { :env => nil }], @scmd_spy_new_called_with
       assert_nil subject.cmd_opts
 
-      opts = { Factory.string => Factory.string }
+      opts = { :env => Factory.string }
       cmd  = @cmd_class.new(@cmd_str, opts)
-      assert_equal [@cmd_str, opts], @scmd_spy_new_called_with
+      assert_equal [@cmd_str, { :env => opts[:env] }], @scmd_spy_new_called_with
       assert_equal opts, cmd.cmd_opts
     end
 
@@ -142,10 +146,9 @@ module Dk::Local
       subject.exitstatus = exitstatus
       assert_equal exitstatus, @scmd_spy.exitstatus
 
-      assert_equal @scmd_spy.run_calls,        subject.run_calls
-      assert_equal @scmd_spy.run_bang_calls,   subject.run_bang_calls
-      assert_equal @scmd_spy.run_called?,      subject.run_called?
-      assert_equal @scmd_spy.run_bang_called?, subject.run_bang_called?
+      subject.run
+      assert_equal @scmd_spy.run_calls,   subject.run_calls
+      assert_equal @scmd_spy.run_called?, subject.run_called?
     end
 
   end
