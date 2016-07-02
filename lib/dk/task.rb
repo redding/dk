@@ -55,7 +55,19 @@ module Dk
       def cmd!(cmd_str, opts = nil)
         cmd = @dk_runner.cmd(cmd_str, opts)
         if !cmd.success?
-          raise LocalCmdRunError, "error running: `#{cmd.cmd_str}`", caller
+          raise CmdRunError, "error running `#{cmd.cmd_str}`", caller
+        end
+        cmd
+      end
+
+      def ssh(cmd_str, opts = nil)
+        @dk_runner.ssh(cmd_str, opts)
+      end
+
+      def ssh!(cmd_str, opts = nil)
+        cmd = @dk_runner.ssh(cmd_str, opts)
+        if !cmd.success?
+          raise SSHRunError, "error running `#{cmd.cmd_str}` over ssh", caller
         end
         cmd
       end
@@ -78,7 +90,8 @@ module Dk
 
     end
 
-    LocalCmdRunError = Class.new(RuntimeError)
+    CmdRunError = Class.new(RuntimeError)
+    SSHRunError = Class.new(RuntimeError)
 
     module ClassMethods
 

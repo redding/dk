@@ -15,4 +15,8 @@ module Factory
     [0, 1].sample
   end
 
+  def self.hosts
+    Factory.integer(3).times.map{ "#{Factory.string}.example.com" }
+  end
+
 end

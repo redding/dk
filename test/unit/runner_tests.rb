@@ -3,6 +3,7 @@ require 'dk/runner'
 
 require 'dk/local'
 require 'dk/null_logger'
+require 'dk/remote'
 require 'dk/task'
 
 class Dk::Runner
@@ -30,7 +31,7 @@ class Dk::Runner
     should have_readers :params, :logger
     should have_imeths :run, :run_task, :set_param
     should have_imeths :log_info, :log_debug, :log_error
-    should have_imeths :cmd
+    should have_imeths :cmd, :ssh
 
     should "know its attrs" do
       assert_equal @args[:params], subject.params
@@ -113,13 +114,26 @@ class Dk::Runner
 
   end
 
-  class CmdTests < UnitTests
-    desc "running cmds"
+  class CmdSetupTests < UnitTests
     setup do
       @cmd_str   = Factory.string
       @cmd_opts  = { Factory.string => Factory.string}
-      @local_cmd = nil
 
+      @log_out = ""
+      logger = Logger.new(StringIO.new(@log_out))
+      logger.formatter = proc do |severity, datetime, progname, msg|
+        "#{severity} -- #{msg}\n"
+      end
+      @runner_opts = { :logger => logger }
+    end
+    subject{ @runner }
+
+  end
+
+  class CmdTests < CmdSetupTests
+    desc "running cmds"
+    setup do
+      @local_cmd = nil
       @local_cmd_new_called_with = nil
       Assert.stub(Dk::Local::Cmd, :new) do |*args|
         @local_cmd_new_called_with = args
@@ -128,14 +142,8 @@ class Dk::Runner
         end
       end
 
-      @log_out = ""
-      logger = Logger.new(StringIO.new(@log_out))
-      logger.formatter = proc do |severity, datetime, progname, msg|
-        "#{severity} -- #{msg}\n"
-      end
-      @runner  = @runner_class.new(:logger => logger)
+      @runner = @runner_class.new(@runner_opts)
     end
-    subject{ @runner }
 
     should "build, log and run local cmds" do
       @runner.cmd(@cmd_str, @cmd_opts)
@@ -147,6 +155,45 @@ class Dk::Runner
       assert_true @local_cmd.run_called?
 
       assert_equal exp_log_output(@local_cmd), @log_out
+    end
+
+    private
+
+    def exp_log_output(cmd)
+      ( ["INFO -- #{cmd.cmd_str}\n"] +
+        cmd.output_lines.map{ |ol| "DEBUG -- #{ol.line}\n" }
+      ).join("")
+    end
+
+  end
+
+  class SSHCmdTests < CmdSetupTests
+    desc "running ssh cmds"
+    setup do
+      @cmd_opts.merge!(:hosts => Factory.hosts)
+
+      @remote_cmd = nil
+      @remote_cmd_new_called_with = nil
+      Assert.stub(Dk::Remote::Cmd, :new) do |*args|
+        @remote_cmd_new_called_with = args
+        @remote_cmd = Dk::Remote::CmdSpy.new(*args).tap do |cmd_spy|
+          cmd_spy.stdout = Factory.stdout
+        end
+      end
+
+      @runner = @runner_class.new(@runner_opts)
+    end
+
+    should "build, log and run remote cmds" do
+      @runner.ssh(@cmd_str, @cmd_opts)
+
+      exp = [@cmd_str, @cmd_opts]
+      assert_equal exp, @remote_cmd_new_called_with
+
+      assert_not_nil @remote_cmd
+      assert_true @remote_cmd.run_called?
+
+      assert_equal exp_log_output(@remote_cmd), @log_out
     end
 
     private

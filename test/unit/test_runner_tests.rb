@@ -36,6 +36,7 @@ class Dk::TestRunner
     should have_accessors :task_class
     should have_imeths :task
     should have_imeths :stub_cmd, :unstub_cmd, :unstub_all_cmds
+    should have_imeths :stub_ssh, :unstub_ssh, :unstub_all_ssh
 
     should "know how to build a task of its task class" do
       params = { Factory.string => Factory.string }
@@ -60,14 +61,16 @@ class Dk::TestRunner
       assert_equal @params, subject.run_params
     end
 
-    should "capture any sub-tasks or local cmd spies that were run" do
-      assert_equal 3, @runner.runs.size
+    should "capture any sub-tasks or local/remote cmd spies that were run" do
+      assert_equal 5, @runner.runs.size
 
-      st, lc, lcb = @runner.runs
+      st, lc, lcb, rc, rcb = @runner.runs
 
-      assert_instance_of Dk::TaskRun,       st
-      assert_instance_of Dk::Local::CmdSpy, lc
-      assert_instance_of Dk::Local::CmdSpy, lcb
+      assert_instance_of Dk::TaskRun,        st
+      assert_instance_of Dk::Local::CmdSpy,  lc
+      assert_instance_of Dk::Local::CmdSpy,  lcb
+      assert_instance_of Dk::Remote::CmdSpy, rc
+      assert_instance_of Dk::Remote::CmdSpy, rcb
 
       assert_same st, subject.sub_task
       assert_equal TestTask::SubTask,       st.task_class
@@ -83,11 +86,21 @@ class Dk::TestRunner
       assert_equal subject.local_cmd_str,  lcb.cmd_str
       assert_equal subject.local_cmd_opts, lcb.cmd_opts
       assert_true lcb.run_called?
+
+      assert_same rc, subject.remote_cmd
+      assert_equal subject.remote_cmd_str,  rc.cmd_str
+      assert_equal subject.remote_cmd_opts, rc.cmd_opts
+      assert_true rc.run_called?
+
+      assert_same rcb, subject.remote_cmd_bang
+      assert_equal subject.remote_cmd_str,  rcb.cmd_str
+      assert_equal subject.remote_cmd_opts, rcb.cmd_opts
+      assert_true rcb.run_called?
     end
 
   end
 
-  class LocalCmdStubTests < InitTests
+  class CmdStubTests < InitTests
     setup do
       @task = @runner.task
 
@@ -135,12 +148,54 @@ class Dk::TestRunner
 
   end
 
+  class SSHStubTests < InitTests
+    setup do
+      @task = @runner.task
+
+      cmd_spy = nil
+      @runner.stub_ssh(@task.remote_cmd_str, @task.remote_cmd_opts) do |spy|
+        cmd_spy = spy
+      end
+      @cmd_spy = cmd_spy
+    end
+    subject{ @task }
+
+    should "stub custom ssh cmd spies" do
+      @runner.run
+
+      assert_same @cmd_spy, subject.remote_cmd
+      assert_same @cmd_spy, subject.remote_cmd_bang
+
+      assert_true @cmd_spy.run_called?
+    end
+
+    should "unstub specific ssh cmd spies" do
+      @runner.unstub_ssh(@task.remote_cmd_str, @task.remote_cmd_opts)
+
+      @runner.run
+
+      assert_not_same @cmd_spy, subject.remote_cmd
+      assert_not_same @cmd_spy, subject.remote_cmd_bang
+    end
+
+    should "unstub all ssh cmd spies" do
+      @runner.unstub_all_ssh
+
+      @runner.run
+
+      assert_not_same @cmd_spy, subject.remote_cmd
+      assert_not_same @cmd_spy, subject.remote_cmd_bang
+    end
+
+  end
+
   class TestTask
     include Dk::Task
 
     attr_reader :run_called, :run_params
     attr_reader :sub_task
     attr_reader :local_cmd, :local_cmd_bang
+    attr_reader :remote_cmd, :remote_cmd_bang
 
     def sub_task_params
       @sub_task_params ||= { Factory.string => Factory.string }
@@ -154,14 +209,26 @@ class Dk::TestRunner
       @local_cmd_opts ||= { Factory.string => Factory.string }
     end
 
+    def remote_cmd_str
+      @remote_cmd_str ||= Factory.string
+    end
+
+    def remote_cmd_opts
+      @remote_cmd_opts ||= {
+        Factory.string => Factory.string,
+        :hosts         => Factory.hosts
+      }
+    end
+
     def run!
       @run_called = true
       @run_params = params
 
-      @sub_task = run_task(SubTask, self.sub_task_params)
-
-      @local_cmd      = cmd(self.local_cmd_str, self.local_cmd_opts)
-      @local_cmd_bang = cmd!(self.local_cmd_str, self.local_cmd_opts)
+      @sub_task        = run_task(SubTask, self.sub_task_params)
+      @local_cmd       = cmd(self.local_cmd_str, self.local_cmd_opts)
+      @local_cmd_bang  = cmd!(self.local_cmd_str, self.local_cmd_opts)
+      @remote_cmd      = ssh(self.remote_cmd_str, self.remote_cmd_opts)
+      @remote_cmd_bang = ssh!(self.remote_cmd_str, self.remote_cmd_opts)
     end
 
     class SubTask
