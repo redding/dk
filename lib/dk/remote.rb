@@ -39,7 +39,7 @@ module Dk::Remote
 
     def output_lines
       self.hosts.inject([]) do |lines, host|
-        lines + @local_cmds[host].output_lines
+        lines + build_output_lines(host, @local_cmds[host].output_lines)
       end
     end
 
@@ -50,6 +50,12 @@ module Dk::Remote
       val = "\"#{cmd_str.gsub(/\s+/, ' ')}\"".gsub("\\", "\\\\\\").gsub('"', '\"')
       "ssh #{args} #{host} -- \"sh -c #{val}\""
     end
+
+    def build_output_lines(host, local_cmd_output_lines)
+      local_cmd_output_lines.map{ |ol| OutputLine.new(host, ol.name, ol.line) }
+    end
+
+    OutputLine = Struct.new(:host, :name, :line)
 
   end
 
