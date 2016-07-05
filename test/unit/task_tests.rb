@@ -151,7 +151,7 @@ module Dk::Task
 
   end
 
-  class RunLocalCmdPrivateHelpersTests < InitTests
+  class CmdPrivateHelpersTests < InitTests
 
     should "run local cmds, calling to the runner" do
       runner_cmd_called_with = nil
@@ -177,15 +177,54 @@ module Dk::Task
       cmd_str  = Factory.string
       cmd_opts = { Factory.string => Factory.string }
 
-      err = assert_raises(LocalCmdRunError) do
+      err = assert_raises(CmdRunError) do
         subject.instance_eval{ cmd!(cmd_str, cmd_opts) }
       end
 
-      exp = "error running: `#{cmd_str}`"
+      exp = "error running `#{cmd_str}`"
       assert_equal exp, err.message
 
       exp = [cmd_str, cmd_opts]
       assert_equal exp, runner_cmd_called_with
+    end
+
+  end
+
+  class SSHPrivateHelpersTests < InitTests
+
+    should "run ssh cmds, calling to the runner" do
+      runner_ssh_called_with = nil
+      Assert.stub(@runner, :ssh){ |*args| runner_ssh_called_with = args }
+
+      cmd_str  = Factory.string
+      cmd_opts = { Factory.string => Factory.string }
+      subject.instance_eval{ ssh(cmd_str, cmd_opts) }
+
+      exp = [cmd_str, cmd_opts]
+      assert_equal exp, runner_ssh_called_with
+    end
+
+    should "run ssh cmds and error if not successful" do
+      runner_ssh_called_with = nil
+      Assert.stub(@runner, :ssh) do |*args|
+        runner_ssh_called_with = args
+        Assert.stub_send(@runner, :ssh, *args).tap do |cmd_spy|
+          Assert.stub(cmd_spy, :success?){ false }
+        end
+      end
+
+      cmd_str  = Factory.string
+      cmd_opts = { Factory.string => Factory.string }
+
+      err = assert_raises(SSHRunError) do
+        subject.instance_eval{ ssh!(cmd_str, cmd_opts) }
+      end
+
+      exp = "error running `#{cmd_str}` over ssh"
+      assert_equal exp, err.message
+
+      exp = [cmd_str, cmd_opts]
+      assert_equal exp, runner_ssh_called_with
     end
 
   end

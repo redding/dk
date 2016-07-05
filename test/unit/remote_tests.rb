@@ -8,7 +8,7 @@ module Dk::Remote
   class UnitTests < Assert::Context
     desc "Dk::Remote"
     setup do
-      @hosts   = Factory.integer(3).times.map{ Factory.string }
+      @hosts   = Factory.hosts
       @cmd_str = Factory.string
 
       @opts = {
@@ -139,7 +139,8 @@ module Dk::Remote
     end
 
     should have_readers :cmd_opts
-    should have_imeths :exitstatus=, :run_calls, :run_called?
+    should have_imeths :stdout=, :stderr=, :exitstatus=
+    should have_imeths :run_calls, :run_called?
 
     should "build a local cmd spy for each host with the cmd str, given opts" do
       subject.hosts.each do |host|
@@ -158,6 +159,14 @@ module Dk::Remote
 
     should "demeter its first local cmd spy" do
       first_local_cmd_spy = subject.local_cmds[subject.hosts.first]
+
+      stdout = Factory.stdout
+      subject.stdout = stdout
+      assert_equal stdout, first_local_cmd_spy.scmd.stdout
+
+      stderr = Factory.stderr
+      subject.stderr = stderr
+      assert_equal stderr, first_local_cmd_spy.scmd.stderr
 
       exitstatus = Factory.exitstatus
       subject.exitstatus = exitstatus

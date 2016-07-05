@@ -1,5 +1,6 @@
 require 'dk/local'
 require 'dk/null_logger'
+require 'dk/remote'
 
 module Dk
 
@@ -37,6 +38,10 @@ module Dk
       build_and_run_local_cmd(cmd_str, opts)
     end
 
+    def ssh(cmd_str, opts)
+      build_and_run_remote_cmd(cmd_str, opts)
+    end
+
     private
 
     def build_and_run_task(task_class, params = nil)
@@ -60,6 +65,23 @@ module Dk
       block.call(cmd)
       cmd.output_lines.each do |output_line|
         self.logger.debug(output_line.line) # TODO: style up, include name
+      end
+      cmd
+    end
+
+    def build_and_run_remote_cmd(cmd_str, opts, &block)
+      log_remote_cmd(build_remote_cmd(cmd_str, opts)){ |cmd| cmd.run }
+    end
+
+    def build_remote_cmd(cmd_str, opts)
+      Remote::Cmd.new(cmd_str, opts)
+    end
+
+    def log_remote_cmd(cmd, &block)
+      self.logger.info(cmd.cmd_str) # TODO: style up
+      block.call(cmd)
+      cmd.output_lines.each do |output_line|
+        self.logger.debug(output_line.line) # TODO: style up, include name, host
       end
       cmd
     end
