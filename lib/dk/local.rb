@@ -8,9 +8,10 @@ module Dk::Local
     attr_reader :scmd, :cmd_str
 
     def initialize(scmd_or_spy_klass, cmd_str, opts)
-      opts   ||= {}
-      @scmd    = scmd_or_spy_klass.new(cmd_str, :env => opts[:env])
+      opts ||= {}
+
       @cmd_str = cmd_str
+      @scmd    = scmd_or_spy_klass.new(@cmd_str, :env => opts[:env])
     end
 
     def to_s; self.cmd_str; end

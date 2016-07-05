@@ -5,16 +5,20 @@ module Dk::Remote
 
   class BaseCmd
 
-    attr_reader :hosts, :cmd_str, :local_cmds
+    attr_reader :hosts, :ssh_args, :cmd_str, :local_cmds
 
     def initialize(local_cmd_or_spy_klass, cmd_str, opts)
-      opts   ||= {}
-      @hosts   = (opts[:hosts] || []).sort # TODO: accept ssh opts string
-      @cmd_str = cmd_str
+      opts ||= {}
+
+      @hosts    = (opts[:hosts] || []).sort
+      @ssh_args = opts[:ssh_args] || ''
+      @cmd_str  = cmd_str
 
       @local_cmds = @hosts.inject({}) do |cmds, host|
-        # TODO: build host-specific ssh cmd str
-        cmds[host] = local_cmd_or_spy_klass.new(cmd_str, :env => opts[:env])
+        cmds[host] = local_cmd_or_spy_klass.new(
+          ssh_cmd_str(@cmd_str, host, @ssh_args),
+          { :env => opts[:env] }
+        )
         cmds
       end
     end
@@ -37,6 +41,14 @@ module Dk::Remote
       self.hosts.inject([]) do |lines, host|
         lines + @local_cmds[host].output_lines
       end
+    end
+
+    private
+
+    # escape everything properly; run in sh to ensure full profile is loaded
+    def ssh_cmd_str(cmd_str, host, args)
+      val = "\"#{cmd_str.gsub(/\s+/, ' ')}\"".gsub("\\", "\\\\\\").gsub('"', '\"')
+      "ssh #{args} #{host} -- \"sh -c #{val}\""
     end
 
   end
