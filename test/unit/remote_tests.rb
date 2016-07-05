@@ -119,9 +119,21 @@ module Dk::Remote
     should "know its output lines" do
       exp = []
       subject.hosts.each do |host|
-        exp += subject.local_cmds[host].output_lines
+        subject.local_cmds[host].output_lines.each do |ol|
+          exp << [host, ol]
+        end
       end
-      assert_equal exp, subject.output_lines
+      output_lines = subject.output_lines
+
+      assert_equal exp.size, output_lines.size
+
+      if output_lines.size > 0
+        assert_instance_of BaseCmd::OutputLine, output_lines.sample
+      end
+
+      assert_equal exp.map{ |(h, ol)| h },       output_lines.map(&:host)
+      assert_equal exp.map{ |(h, ol)| ol.name }, output_lines.map(&:name)
+      assert_equal exp.map{ |(h, ol)| ol.line }, output_lines.map(&:line)
     end
 
   end
