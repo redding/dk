@@ -1,8 +1,8 @@
-require 'dk/runner'
+require 'dk/config_runner'
 
 module Dk
 
-  class DkRunner < Runner
+  class DkRunner < ConfigRunner
   end
 
 end

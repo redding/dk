@@ -1,8 +1,9 @@
 require 'assert'
 require 'dk/tree_runner'
 
-require 'dk/has_the_runs'
+require 'dk/config'
 require 'dk/dry_runner'
+require 'dk/has_the_runs'
 require 'dk/task'
 require 'dk/task_run'
 
@@ -28,7 +29,8 @@ class Dk::TreeRunner
   class InitTests < UnitTests
     desc "when init"
     setup do
-      @runner = @runner_class.new
+      config = Dk::Config.new
+      @runner = @runner_class.new(config)
     end
     subject{ @runner }
 
