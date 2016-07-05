@@ -5,7 +5,9 @@ module Dk
   class ConfigRunner < Runner
 
     def initialize(config)
-      super({}) # TODO: set runner args based on the config
+      super({
+        :params => config.params
+      })
     end
 
   end

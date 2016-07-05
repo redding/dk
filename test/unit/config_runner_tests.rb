@@ -25,8 +25,11 @@ class Dk::ConfigRunner
       @config = Dk::Config.new
       @runner = @runner_class.new(@config)
     end
+    subject{ @runner }
 
-    # TODO: test that the runner gets set with config values
+    should "initialize using the config's values" do
+      assert_equal @config.params, subject.params
+    end
 
   end
 

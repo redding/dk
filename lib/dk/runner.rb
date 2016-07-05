@@ -1,6 +1,7 @@
 require 'dk/local'
 require 'dk/null_logger'
 require 'dk/remote'
+require 'dk/stringify_params'
 
 module Dk
 
@@ -27,7 +28,7 @@ module Dk
     end
 
     def set_param(key, value)
-      self.params.merge!(normalize_params({ key => value }))
+      self.params.merge!(normalize_params(key => value))
     end
 
     def log_info(msg);  self.logger.info(msg);  end # TODO: style up
@@ -88,19 +89,6 @@ module Dk
 
     def normalize_params(params)
       StringifyParams.new(params || {})
-    end
-
-    module StringifyParams
-      def self.new(object)
-        case(object)
-        when ::Hash
-          object.inject({}){ |h, (k, v)| h.merge(k.to_s => self.new(v)) }
-        when ::Array
-          object.map{ |item| self.new(item) }
-        else
-          object
-        end
-      end
     end
 
   end
