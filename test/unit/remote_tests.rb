@@ -179,6 +179,15 @@ module Dk::Remote
     should have_imeths :stdout=, :stderr=, :exitstatus=
     should have_imeths :run_calls, :run_called?
 
+    should "know its default host name" do
+      assert_equal 'dk-default-cmd-spy-host', @cmd_class::DEFAULT_HOST_NAME
+    end
+
+    should "manually define a single host if none are given" do
+      cmd = @cmd_class.new(@cmd_str)
+      assert_equal [@cmd_class::DEFAULT_HOST_NAME], cmd.hosts
+    end
+
     should "build a local cmd spy for each host with the cmd str, given opts" do
       subject.hosts.each do |host|
         assert_instance_of Dk::Local::CmdSpy, subject.local_cmds[host]

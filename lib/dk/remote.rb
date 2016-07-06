@@ -69,10 +69,16 @@ module Dk::Remote
 
   class CmdSpy < BaseCmd
 
+    DEFAULT_HOST_NAME = 'dk-default-cmd-spy-host'.freeze
+
     attr_reader :cmd_opts
 
     def initialize(cmd_str, opts = nil)
-      super(Dk::Local::CmdSpy, cmd_str, opts)
+      opts ||= {}
+      hosts = opts[:hosts] || []
+      hosts << DEFAULT_HOST_NAME if hosts.empty?
+      super(Dk::Local::CmdSpy, cmd_str, opts.merge(:hosts => hosts))
+
       @cmd_opts = opts
       @first_local_cmd_spy = @local_cmds[@hosts.first]
     end
