@@ -1,8 +1,9 @@
-require 'dk/stringify_params'
+require 'dk/has_set_param'
 
 module Dk
 
   class Config
+    include Dk::HasSetParam
 
     attr_reader :init_procs, :params
 
@@ -13,16 +14,6 @@ module Dk
 
     def init
       self.init_procs.each{ |block| self.instance_eval(&block) }
-    end
-
-    def set_param(key, value)
-      self.params.merge!(dk_normalize_params(key => value))
-    end
-
-    private
-
-    def dk_normalize_params(params)
-      StringifyParams.new(params)
     end
 
   end

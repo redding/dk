@@ -1,6 +1,8 @@
 require 'assert'
 require 'dk/config'
 
+require 'dk/has_set_param'
+
 class Dk::Config
 
   class UnitTests < Assert::Context
@@ -9,6 +11,10 @@ class Dk::Config
       @config_class = Dk::Config
     end
     subject{ @config_class }
+
+    should "include HasSetParam" do
+      assert_includes Dk::HasSetParam, subject
+    end
 
   end
 
@@ -20,7 +26,7 @@ class Dk::Config
     subject{ @config }
 
     should have_readers :init_procs, :params
-    should have_imeths :init, :set_param
+    should have_imeths :init
 
     should "default its attrs" do
       assert_equal [], subject.init_procs
@@ -35,14 +41,6 @@ class Dk::Config
 
       subject.init
       assert_equal @config, init_self
-    end
-
-    should "stringify and set param values with `set_param`" do
-      key, value = Factory.string.to_sym, Factory.string
-      subject.set_param(key, value)
-
-      assert_equal value, subject.params[key.to_s]
-      assert_nil subject.params[key]
     end
 
   end
