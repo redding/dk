@@ -1,18 +1,19 @@
+require 'dk/has_set_param'
 require 'dk/local'
 require 'dk/null_logger'
 require 'dk/remote'
-require 'dk/stringify_params'
 
 module Dk
 
   class Runner
+    include Dk::HasSetParam
 
     attr_reader :params, :logger
 
     def initialize(args = nil)
       args ||= {}
       @params = Hash.new{ |h, k| raise ArgumentError, "no param named `#{k}`" }
-      @params.merge!(normalize_params(args[:params]))
+      @params.merge!(dk_normalize_params(args[:params]))
 
       @logger = args[:logger] || NullLogger.new
     end
@@ -25,10 +26,6 @@ module Dk
     # called by other tasks on sub-tasks
     def run_task(task_class, params = nil)
       build_and_run_task(task_class, params)
-    end
-
-    def set_param(key, value)
-      self.params.merge!(normalize_params(key => value))
     end
 
     def log_info(msg);  self.logger.info(msg);  end # TODO: style up
@@ -85,10 +82,6 @@ module Dk
         self.logger.debug(output_line.line) # TODO: style up, include name, host
       end
       cmd
-    end
-
-    def normalize_params(params)
-      StringifyParams.new(params || {})
     end
 
   end

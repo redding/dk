@@ -1,6 +1,7 @@
 require 'assert'
 require 'dk/runner'
 
+require 'dk/has_set_param'
 require 'dk/local'
 require 'dk/null_logger'
 require 'dk/remote'
@@ -14,6 +15,10 @@ class Dk::Runner
       @runner_class = Dk::Runner
     end
     subject{ @runner_class }
+
+    should "include HasSetParam" do
+      assert_includes Dk::HasSetParam, subject
+    end
 
   end
 
@@ -29,7 +34,7 @@ class Dk::Runner
     subject{ @runner }
 
     should have_readers :params, :logger
-    should have_imeths :run, :run_task, :set_param
+    should have_imeths :run, :run_task
     should have_imeths :log_info, :log_debug, :log_error
     should have_imeths :cmd, :ssh
 
@@ -80,14 +85,6 @@ class Dk::Runner
       task = subject.run_task(TestTask, params)
       assert_true task.run_called
       assert_equal params, task.run_params
-    end
-
-    should "stringify and set param values with `set_param`" do
-      key, value = Factory.string.to_sym, Factory.string
-      subject.set_param(key, value)
-
-      assert_equal value, subject.params[key.to_s]
-      assert_raises(ArgumentError){ subject.params[key] }
     end
 
     should "call to its logger for its log_* methods" do
