@@ -19,11 +19,14 @@ class Dk::Config
     end
     subject{ @config }
 
-    should have_readers :init_procs
-    should have_imeths :init
+    should have_readers :init_procs, :params
+    should have_imeths :init, :set_param
 
-    should "have no init procs by default" do
+    should "default its attrs" do
       assert_equal [], subject.init_procs
+
+      exp = {}
+      assert_equal exp, subject.params
     end
 
     should "instance eval its init procs on init" do
@@ -32,6 +35,14 @@ class Dk::Config
 
       subject.init
       assert_equal @config, init_self
+    end
+
+    should "stringify and set param values with `set_param`" do
+      key, value = Factory.string.to_sym, Factory.string
+      subject.set_param(key, value)
+
+      assert_equal value, subject.params[key.to_s]
+      assert_nil subject.params[key]
     end
 
   end
