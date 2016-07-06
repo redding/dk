@@ -60,6 +60,18 @@ module Dk::Remote
       assert_equal @hosts.sort, subject.hosts
     end
 
+    should "complain if not given any hosts" do
+      assert_raises(NoHostsError) do
+        @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, :hosts => nil)
+      end
+      assert_raises(NoHostsError) do
+        @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, :hosts => Factory.integer)
+      end
+      assert_raises(NoHostsError) do
+        @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, :hosts => [])
+      end
+    end
+
     should "know its ssh args" do
       assert_equal @ssh_args, subject.ssh_args
     end

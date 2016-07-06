@@ -1,4 +1,6 @@
+require 'dk/config'
 require 'dk/has_set_param'
+require 'dk/has_ssh_opts'
 require 'dk/local'
 require 'dk/null_logger'
 require 'dk/remote'
@@ -7,15 +9,19 @@ module Dk
 
   class Runner
     include Dk::HasSetParam
+    include Dk::HasSSHOpts
 
     attr_reader :params, :logger
 
-    def initialize(args = nil)
-      args ||= {}
+    def initialize(opts = nil)
+      opts ||= {}
       @params = Hash.new{ |h, k| raise ArgumentError, "no param named `#{k}`" }
-      @params.merge!(dk_normalize_params(args[:params]))
+      @params.merge!(dk_normalize_params(opts[:params]))
 
-      @logger = args[:logger] || NullLogger.new
+      @ssh_hosts = opts[:ssh_hosts] || Config::DEFAULT_SSH_HOSTS.dup
+      @ssh_args  = opts[:ssh_args]  || Config::DEFAULT_SSH_ARGS.dup
+
+      @logger = opts[:logger] || NullLogger.new
     end
 
     # called by CLI on top-level tasks

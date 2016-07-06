@@ -216,7 +216,8 @@ class Dk::TestRunner
     def remote_cmd_opts
       @remote_cmd_opts ||= {
         Factory.string => Factory.string,
-        :hosts         => Factory.hosts
+        :hosts         => Factory.hosts,
+        :ssh_args      => Factory.string
       }
     end
 

@@ -65,7 +65,27 @@ end
 
 Use the `param` helper to access named params that the task was run with.  Params can be two ways: globally from the main config or from callback definitions and `run_task` calls.
 
-Use the `set_param` method to set new global param values on the main config.  Any subsequent tasks that are run will have this param value available to them.
+Use the `set_param` method to set new global param values like you would on the main config.  Any subsequent tasks that are run will have this param value available to them.
+
+##### `ssh_hosts`
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  def run!
+    ssh_hosts('my-app-servers') # => nil
+
+    ssh_hosts('my-app-servers', ['myserver1.example.com'])
+    ssh_hosts('my-app-servers') # => ['myserver1.example.com']
+  end
+
+end
+```
+
+Use the `ssh_hosts` method to set new ssh host lists values like you would on the main config.  Any subsequent tasks that are run will have these ssh hosts available to their `ssh` commands.
 
 ##### `run_task`
 
@@ -118,7 +138,7 @@ class MyTask
   include Dk::Task
 
   def run!
-    hosts = ['1.example.com', 'someuser@2.example.com']
+    hosts = ['1.example.com', 'user@2.example.com']
     ssh "ls -la", :hosts => hosts
     ssh! "test -d some_file", :hosts => hosts
   end
@@ -212,6 +232,60 @@ end
 ```
 
 Each callback can be optionally configured with a set of params.  These tasks will be run in the order they are added before/after the `run!` method of the current task.  Using `halt` does not affect whether callbacks are run or not.
+
+#### Default SSH Hosts
+
+You can configure a default list of hosts to use for ssh commands made in a Task.  This will on all commands that don't specify a `:hosts` option:
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  ssh_hosts ['1.example.com', 'user@2.example.com']
+
+  def run!
+    ssh('ls -la') # => will ssh to 1.example.com and user@2.example.com
+    ssh('ls -la', :hosts => ['3.example.com']) # => will ssh to 3.example.com
+  end
+
+end
+```
+
+You can also specify a named list of hosts that have been configured:
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  ssh_hosts 'my-app-servers'
+
+  def run!
+    ssh('ls -la') # => will ssh to the configured 'my-app-servers' hosts
+  end
+
+end
+```
+
+You can also specify a proc that will be instance eval'd on the task instance:
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  ssh_hosts{ params['some-servers'] }
+
+  def run!
+    ssh('ls -la') # => will ssh to the hosts specified by the 'some-servers' param
+  end
+
+end
+```
 
 #### Testing Tasks
 

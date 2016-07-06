@@ -9,8 +9,11 @@ module Dk::Remote
 
     def initialize(local_cmd_or_spy_klass, cmd_str, opts)
       opts ||= {}
+      if (h = opts[:hosts]).nil? || !h.respond_to?(:empty?) || h.empty?
+        raise NoHostsError, "no hosts to run cmd on (#{h.inspect})"
+      end
 
-      @hosts    = (opts[:hosts] || []).sort
+      @hosts    = h.sort
       @ssh_args = opts[:ssh_args] || ''
       @cmd_str  = cmd_str
 
@@ -58,6 +61,8 @@ module Dk::Remote
     OutputLine = Struct.new(:host, :name, :line)
 
   end
+
+  NoHostsError = Class.new(ArgumentError)
 
   class Cmd < BaseCmd
 

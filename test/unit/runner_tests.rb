@@ -1,7 +1,9 @@
 require 'assert'
 require 'dk/runner'
 
+require 'dk/config'
 require 'dk/has_set_param'
+require 'dk/has_ssh_opts'
 require 'dk/local'
 require 'dk/null_logger'
 require 'dk/remote'
@@ -18,6 +20,10 @@ class Dk::Runner
 
     should "include HasSetParam" do
       assert_includes Dk::HasSetParam, subject
+    end
+
+    should "include HasSSHOpts" do
+      assert_includes Dk::HasSSHOpts, subject
     end
 
   end
@@ -44,8 +50,11 @@ class Dk::Runner
     end
 
     should "default its attrs" do
-      exp = {}
-      assert_equal exp, @runner_class.new.params
+      runner = @runner_class.new
+
+      assert_equal Hash.new,                      runner.params
+      assert_equal Dk::Config::DEFAULT_SSH_HOSTS, runner.ssh_hosts
+      assert_equal Dk::Config::DEFAULT_SSH_ARGS,  runner.ssh_args
 
       assert_instance_of Dk::NullLogger, @runner_class.new.logger
     end
