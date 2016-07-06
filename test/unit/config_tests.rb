@@ -29,6 +29,7 @@ class Dk::Config
     should have_readers :init_procs, :params
     should have_imeths :init
     should have_imeths :before, :after, :prepend_before, :prepend_after
+    should have_imeths :ssh_hosts, :ssh_args
 
     should "default its attrs" do
       assert_equal [], subject.init_procs
@@ -75,6 +76,28 @@ class Dk::Config
       subject.prepend_after(subj_task_class, cb_task_class, cb_params)
       assert_equal cb_task_class, subj_task_class.after_callbacks.first.task_class
       assert_equal cb_params,     subj_task_class.after_callbacks.first.params
+    end
+
+    should "know its ssh hosts" do
+      group_name = Factory.string
+      hosts      = Factory.hosts
+
+      assert_equal Hash.new, subject.ssh_hosts
+      assert_nil subject.ssh_hosts(group_name)
+
+      assert_equal hosts, subject.ssh_hosts(group_name, hosts)
+      assert_equal hosts, subject.ssh_hosts(group_name)
+
+      exp = { group_name => hosts }
+      assert_equal exp, subject.ssh_hosts
+    end
+
+    should "know its ssh args" do
+      args = Factory.string
+
+      assert_equal "",   subject.ssh_args
+      assert_equal args, subject.ssh_args(args)
+      assert_equal args, subject.ssh_args
     end
 
   end
