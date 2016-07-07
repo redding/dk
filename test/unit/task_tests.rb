@@ -216,7 +216,8 @@ module Dk::Task
       cmd_opts = {
         Factory.string => Factory.string,
         :hosts         => Factory.hosts,
-        :ssh_args      => Factory.string
+        :ssh_args      => Factory.string,
+        :host_ssh_args => { Factory.string => Factory.string }
       }
       subject.instance_eval{ ssh(cmd_str, cmd_opts) }
 
@@ -237,7 +238,8 @@ module Dk::Task
       cmd_opts = {
         Factory.string => Factory.string,
         :hosts         => Factory.hosts,
-        :ssh_args      => Factory.string
+        :ssh_args      => Factory.string,
+        :host_ssh_args => { Factory.string => Factory.string }
       }
 
       err = assert_raises(SSHRunError) do
@@ -325,6 +327,19 @@ module Dk::Task
 
       task.instance_eval{ ssh(Factory.string) }
       assert_equal args, runner_ssh_called_with_opts[:ssh_args]
+    end
+
+    should "use the runner's host ssh args if none are given" do
+      args       = { Factory.string => Factory.string }
+      task_class = Class.new{ include Dk::Task }
+      runner     = test_runner(task_class, :host_ssh_args => args)
+      task       = runner.task
+
+      runner_ssh_called_with_opts = nil
+      Assert.stub(runner, :ssh){ |_, opts| runner_ssh_called_with_opts = opts }
+
+      task.instance_eval{ ssh(Factory.string) }
+      assert_equal args, runner_ssh_called_with_opts[:host_ssh_args]
     end
 
   end

@@ -23,6 +23,12 @@ module Dk
         @ssh_args
       end
 
+      def host_ssh_args(host_name = nil, value = nil)
+        return @host_ssh_args if host_name.nil?
+        @host_ssh_args[host_name.to_s] = value if !value.nil?
+        @host_ssh_args[host_name.to_s]
+      end
+
     end
 
   end

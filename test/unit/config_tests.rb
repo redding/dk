@@ -27,6 +27,7 @@ class Dk::Config
       assert_equal Hash.new,  subject::DEFAULT_PARAMS
       assert_equal Hash.new,  subject::DEFAULT_SSH_HOSTS
       assert_equal '',        subject::DEFAULT_SSH_ARGS
+      assert_equal Hash.new,  subject::DEFAULT_HOST_SSH_ARGS
       assert_equal Hash.new,  subject::DEFAULT_TASKS
     end
 
@@ -45,11 +46,12 @@ class Dk::Config
     should have_imeths :task
 
     should "default its attrs" do
-      assert_equal @config_class::DEFAULT_INIT_PROCS, subject.init_procs
-      assert_equal @config_class::DEFAULT_PARAMS,     subject.params
-      assert_equal @config_class::DEFAULT_SSH_HOSTS,  subject.ssh_hosts
-      assert_equal @config_class::DEFAULT_SSH_ARGS,   subject.ssh_args
-      assert_equal @config_class::DEFAULT_TASKS,      subject.tasks
+      assert_equal @config_class::DEFAULT_INIT_PROCS,    subject.init_procs
+      assert_equal @config_class::DEFAULT_PARAMS,        subject.params
+      assert_equal @config_class::DEFAULT_SSH_HOSTS,     subject.ssh_hosts
+      assert_equal @config_class::DEFAULT_SSH_ARGS,      subject.ssh_args
+      assert_equal @config_class::DEFAULT_HOST_SSH_ARGS, subject.host_ssh_args
+      assert_equal @config_class::DEFAULT_TASKS,         subject.tasks
     end
 
     should "instance eval its init procs on init" do

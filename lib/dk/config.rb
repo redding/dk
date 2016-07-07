@@ -8,20 +8,22 @@ module Dk
     include Dk::HasSetParam
     include Dk::HasSSHOpts
 
-    DEFAULT_INIT_PROCS = [].freeze
-    DEFAULT_PARAMS     = {}.freeze
-    DEFAULT_SSH_HOSTS  = {}.freeze
-    DEFAULT_SSH_ARGS   = ''.freeze
-    DEFAULT_TASKS      = {}.freeze
+    DEFAULT_INIT_PROCS    = [].freeze
+    DEFAULT_PARAMS        = {}.freeze
+    DEFAULT_SSH_HOSTS     = {}.freeze
+    DEFAULT_SSH_ARGS      = ''.freeze
+    DEFAULT_HOST_SSH_ARGS = Hash.new{ |h, k| h[k] = DEFAULT_SSH_ARGS }
+    DEFAULT_TASKS         = {}.freeze
 
     attr_reader :init_procs, :params, :tasks
 
     def initialize
-      @init_procs = DEFAULT_INIT_PROCS.dup
-      @params     = DEFAULT_PARAMS.dup
-      @ssh_hosts  = DEFAULT_SSH_HOSTS.dup
-      @ssh_args   = DEFAULT_SSH_ARGS.dup
-      @tasks      = DEFAULT_TASKS.dup
+      @init_procs    = DEFAULT_INIT_PROCS.dup
+      @params        = DEFAULT_PARAMS.dup
+      @ssh_hosts     = DEFAULT_SSH_HOSTS.dup
+      @ssh_args      = DEFAULT_SSH_ARGS.dup
+      @host_ssh_args = DEFAULT_HOST_SSH_ARGS.dup
+      @tasks         = DEFAULT_TASKS.dup
     end
 
     def init

@@ -6,9 +6,10 @@ module Dk
 
     def initialize(config)
       super({
-        :params    => config.params,
-        :ssh_hosts => config.ssh_hosts,
-        :ssh_args  => config.ssh_args
+        :params        => config.params,
+        :ssh_hosts     => config.ssh_hosts,
+        :ssh_args      => config.ssh_args,
+        :host_ssh_args => config.host_ssh_args
       })
     end
 
