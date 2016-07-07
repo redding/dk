@@ -16,6 +16,7 @@ module Dk::Task
     should have_imeths :description, :desc
     should have_imeths :before_callbacks, :after_callbacks
     should have_imeths :before, :after, :prepend_before, :prepend_after
+    should have_imeths :ssh_hosts
 
     should "use much-plugin" do
       assert_includes MuchPlugin, Dk::Task
@@ -66,6 +67,21 @@ module Dk::Task
       subject.prepend_after(task_class, params)
       assert_equal task_class, subject.after_callbacks.first.task_class
       assert_equal params,     subject.after_callbacks.first.params
+    end
+
+    should "know its ssh hosts proc" do
+      assert_kind_of Proc, subject.ssh_hosts
+      assert_nil subject.ssh_hosts.call
+
+      hosts = Factory.hosts
+
+      subject.ssh_hosts hosts
+      assert_kind_of Proc, subject.ssh_hosts
+      assert_equal hosts, subject.ssh_hosts.call
+
+      subject.ssh_hosts{ hosts }
+      assert_kind_of Proc, subject.ssh_hosts
+      assert_equal hosts, subject.ssh_hosts.call
     end
 
   end
@@ -197,7 +213,11 @@ module Dk::Task
       Assert.stub(@runner, :ssh){ |*args| runner_ssh_called_with = args }
 
       cmd_str  = Factory.string
-      cmd_opts = { Factory.string => Factory.string }
+      cmd_opts = {
+        Factory.string => Factory.string,
+        :hosts         => Factory.hosts,
+        :ssh_args      => Factory.string
+      }
       subject.instance_eval{ ssh(cmd_str, cmd_opts) }
 
       exp = [cmd_str, cmd_opts]
@@ -214,7 +234,11 @@ module Dk::Task
       end
 
       cmd_str  = Factory.string
-      cmd_opts = { Factory.string => Factory.string }
+      cmd_opts = {
+        Factory.string => Factory.string,
+        :hosts         => Factory.hosts,
+        :ssh_args      => Factory.string
+      }
 
       err = assert_raises(SSHRunError) do
         subject.instance_eval{ ssh!(cmd_str, cmd_opts) }
@@ -225,6 +249,82 @@ module Dk::Task
 
       exp = [cmd_str, cmd_opts]
       assert_equal exp, runner_ssh_called_with
+    end
+
+    should "use the task's ssh hosts if none are specified" do
+      task_class = Class.new{ include Dk::Task; ssh_hosts Factory.hosts; }
+      runner     = test_runner(task_class)
+      task       = runner.task
+
+      runner_ssh_called_with_opts = nil
+      Assert.stub(runner, :ssh){ |_, opts| runner_ssh_called_with_opts = opts }
+
+      task.instance_eval{ ssh(Factory.string) }
+      assert_equal task_class.ssh_hosts.call, runner_ssh_called_with_opts[:hosts]
+    end
+
+    should "lookup the task's ssh hosts from the runner hosts" do
+      hosts      = Factory.hosts
+      task_class = Class.new{ include Dk::Task; ssh_hosts Factory.string; }
+
+      runner = test_runner(task_class, :ssh_hosts => {
+        task_class.ssh_hosts.call => hosts
+      })
+      task = runner.task
+
+      runner_ssh_called_with_opts = nil
+      Assert.stub(runner, :ssh){ |_, opts| runner_ssh_called_with_opts = opts }
+
+      task.instance_eval{ ssh(Factory.string) }
+      assert_equal hosts, runner_ssh_called_with_opts[:hosts]
+    end
+
+    should "instance eval the task's ssh hosts" do
+      hosts      = Factory.hosts
+      app_hosts  = Factory.string
+      task_class = Class.new{ include Dk::Task; ssh_hosts{ params['app_hosts'] }; }
+
+      runner = test_runner(task_class, {
+        :params    => { 'app_hosts' => app_hosts },
+        :ssh_hosts => { app_hosts => hosts }
+      })
+      task = runner.task
+
+      runner_ssh_called_with_opts = nil
+      Assert.stub(runner, :ssh){ |_, opts| runner_ssh_called_with_opts = opts }
+
+      task.instance_eval{ ssh(Factory.string) }
+      assert_equal hosts, runner_ssh_called_with_opts[:hosts]
+    end
+
+    should "lookup given hosts from the runner hosts" do
+      hosts      = Factory.hosts
+      hosts_name = Factory.string
+      task_class = Class.new{ include Dk::Task }
+
+      runner = test_runner(task_class, :ssh_hosts => {
+        hosts_name => hosts
+      })
+      task = runner.task
+
+      runner_ssh_called_with_opts = nil
+      Assert.stub(runner, :ssh){ |_, opts| runner_ssh_called_with_opts = opts }
+
+      task.instance_eval{ ssh(Factory.string, :hosts => hosts_name) }
+      assert_equal hosts, runner_ssh_called_with_opts[:hosts]
+    end
+
+    should "use the runner's ssh args if none are given" do
+      args       = Factory.string
+      task_class = Class.new{ include Dk::Task }
+      runner     = test_runner(task_class, :ssh_args => args)
+      task       = runner.task
+
+      runner_ssh_called_with_opts = nil
+      Assert.stub(runner, :ssh){ |_, opts| runner_ssh_called_with_opts = opts }
+
+      task.instance_eval{ ssh(Factory.string) }
+      assert_equal args, runner_ssh_called_with_opts[:ssh_args]
     end
 
   end
@@ -284,6 +384,25 @@ module Dk::Task
 
       assert_equal val, subject.instance_eval{ params[p] }
       assert_equal val, @runner.params[p]
+    end
+
+  end
+
+  class SSHHostsPrivateHelpersTests < InitTests
+
+    should "know and set its runner's ssh hosts" do
+      group_name = Factory.string
+      hosts      = Factory.hosts
+
+      assert_equal @runner.ssh_hosts, subject.instance_eval{ ssh_hosts }
+      assert_nil subject.instance_eval{ ssh_hosts(group_name) }
+
+      assert_equal hosts, subject.instance_eval{ ssh_hosts(group_name, hosts) }
+      assert_equal hosts, subject.instance_eval{ ssh_hosts(group_name) }
+
+      exp = { group_name => hosts }
+      assert_equal exp,               @runner.ssh_hosts
+      assert_equal @runner.ssh_hosts, subject.instance_eval{ ssh_hosts }
     end
 
   end

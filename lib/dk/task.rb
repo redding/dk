@@ -61,11 +61,11 @@ module Dk
       end
 
       def ssh(cmd_str, opts = nil)
-        @dk_runner.ssh(cmd_str, opts)
+        @dk_runner.ssh(cmd_str, dk_build_ssh_opts(opts))
       end
 
       def ssh!(cmd_str, opts = nil)
-        cmd = @dk_runner.ssh(cmd_str, opts)
+        cmd = ssh(cmd_str, opts)
         if !cmd.success?
           raise SSHRunError, "error running `#{cmd.cmd_str}` over ssh", caller
         end
@@ -80,6 +80,10 @@ module Dk
         @dk_runner.set_param(key, value)
       end
 
+      def ssh_hosts(group_name = nil, value = nil)
+        @dk_runner.ssh_hosts(group_name, value)
+      end
+
       def halt
         throw :halt
       end
@@ -87,6 +91,29 @@ module Dk
       def log_info(msg);  @dk_runner.log_info(msg);  end
       def log_debug(msg); @dk_runner.log_debug(msg); end
       def log_error(msg); @dk_runner.log_error(msg); end
+
+      def dk_build_ssh_opts(opts)
+        opts ||= {}
+        opts.merge({
+          :hosts    => dk_lookup_ssh_hosts(opts[:hosts]),
+          :ssh_args => dk_lookup_ssh_args(opts[:ssh_args])
+        })
+      end
+
+      def dk_lookup_ssh_hosts(opts_hosts)
+        ssh_hosts[opts_hosts] ||
+        opts_hosts ||
+        ssh_hosts[dk_dsl_ssh_hosts] ||
+        dk_dsl_ssh_hosts
+      end
+
+      def dk_dsl_ssh_hosts
+        @dk_dsl_ssh_hosts ||= self.instance_eval(&self.class.ssh_hosts)
+      end
+
+      def dk_lookup_ssh_args(opts_args)
+        opts_args || @dk_runner.ssh_args
+      end
 
     end
 
@@ -118,6 +145,11 @@ module Dk
 
       def prepend_after(task_class, params = nil)
         self.after_callbacks.unshift(Callback.new(task_class, params))
+      end
+
+      def ssh_hosts(value = nil, &block)
+        @ssh_hosts = block || proc{ value } if !block.nil? || !value.nil?
+        @ssh_hosts || proc{}
       end
 
     end

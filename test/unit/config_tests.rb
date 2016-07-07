@@ -2,6 +2,7 @@ require 'assert'
 require 'dk/config'
 
 require 'dk/has_set_param'
+require 'dk/has_ssh_opts'
 require 'dk/task'
 
 class Dk::Config
@@ -17,6 +18,17 @@ class Dk::Config
       assert_includes Dk::HasSetParam, subject
     end
 
+    should "include HasSSHOpts" do
+      assert_includes Dk::HasSSHOpts, subject
+    end
+
+    should "know its defaults" do
+      assert_equal Array.new, subject::DEFAULT_INIT_PROCS
+      assert_equal Hash.new,  subject::DEFAULT_PARAMS
+      assert_equal Hash.new,  subject::DEFAULT_SSH_HOSTS
+      assert_equal '',        subject::DEFAULT_SSH_ARGS
+    end
+
   end
 
   class InitTests < UnitTests
@@ -29,13 +41,12 @@ class Dk::Config
     should have_readers :init_procs, :params
     should have_imeths :init
     should have_imeths :before, :after, :prepend_before, :prepend_after
-    should have_imeths :ssh_hosts, :ssh_args
 
     should "default its attrs" do
-      assert_equal [], subject.init_procs
-
-      exp = {}
-      assert_equal exp, subject.params
+      assert_equal @config_class::DEFAULT_INIT_PROCS, subject.init_procs
+      assert_equal @config_class::DEFAULT_PARAMS,     subject.params
+      assert_equal @config_class::DEFAULT_SSH_HOSTS,  subject.ssh_hosts
+      assert_equal @config_class::DEFAULT_SSH_ARGS,   subject.ssh_args
     end
 
     should "instance eval its init procs on init" do
@@ -76,28 +87,6 @@ class Dk::Config
       subject.prepend_after(subj_task_class, cb_task_class, cb_params)
       assert_equal cb_task_class, subj_task_class.after_callbacks.first.task_class
       assert_equal cb_params,     subj_task_class.after_callbacks.first.params
-    end
-
-    should "know its ssh hosts" do
-      group_name = Factory.string
-      hosts      = Factory.hosts
-
-      assert_equal Hash.new, subject.ssh_hosts
-      assert_nil subject.ssh_hosts(group_name)
-
-      assert_equal hosts, subject.ssh_hosts(group_name, hosts)
-      assert_equal hosts, subject.ssh_hosts(group_name)
-
-      exp = { group_name => hosts }
-      assert_equal exp, subject.ssh_hosts
-    end
-
-    should "know its ssh args" do
-      args = Factory.string
-
-      assert_equal "",   subject.ssh_args
-      assert_equal args, subject.ssh_args(args)
-      assert_equal args, subject.ssh_args
     end
 
   end
