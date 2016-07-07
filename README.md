@@ -235,7 +235,7 @@ Each callback can be optionally configured with a set of params.  These tasks wi
 
 #### Default SSH Hosts
 
-You can configure a default list of hosts to use for ssh commands made in a Task.  This will on all commands that don't specify a `:hosts` option:
+You can configure a default list of hosts to use for ssh commands made in a Task.  These hosts will be used on all commands that don't specify a custom `:hosts` option:
 
 ```ruby
 require 'dk/task'
