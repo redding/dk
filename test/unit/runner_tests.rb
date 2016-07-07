@@ -52,9 +52,10 @@ class Dk::Runner
     should "default its attrs" do
       runner = @runner_class.new
 
-      assert_equal Hash.new,                      runner.params
-      assert_equal Dk::Config::DEFAULT_SSH_HOSTS, runner.ssh_hosts
-      assert_equal Dk::Config::DEFAULT_SSH_ARGS,  runner.ssh_args
+      assert_equal Hash.new,                          runner.params
+      assert_equal Dk::Config::DEFAULT_SSH_HOSTS,     runner.ssh_hosts
+      assert_equal Dk::Config::DEFAULT_SSH_ARGS,      runner.ssh_args
+      assert_equal Dk::Config::DEFAULT_HOST_SSH_ARGS, runner.host_ssh_args
 
       assert_instance_of Dk::NullLogger, @runner_class.new.logger
     end

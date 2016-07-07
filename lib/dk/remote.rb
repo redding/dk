@@ -1,3 +1,4 @@
+require 'dk/config'
 require 'dk/local'
 
 module Dk; end
@@ -5,7 +6,7 @@ module Dk::Remote
 
   class BaseCmd
 
-    attr_reader :hosts, :ssh_args, :cmd_str, :local_cmds
+    attr_reader :hosts, :ssh_args, :host_ssh_args, :cmd_str, :local_cmds
 
     def initialize(local_cmd_or_spy_klass, cmd_str, opts)
       opts ||= {}
@@ -13,13 +14,14 @@ module Dk::Remote
         raise NoHostsError, "no hosts to run cmd on (#{h.inspect})"
       end
 
-      @hosts    = h.sort
-      @ssh_args = opts[:ssh_args] || ''
-      @cmd_str  = cmd_str
+      @hosts         = h.sort
+      @ssh_args      = opts[:ssh_args]      || Dk::Config::DEFAULT_SSH_ARGS.dup
+      @host_ssh_args = opts[:host_ssh_args] || Dk::Config::DEFAULT_HOST_SSH_ARGS.dup
+      @cmd_str       = cmd_str
 
       @local_cmds = @hosts.inject({}) do |cmds, host|
         cmds[host] = local_cmd_or_spy_klass.new(
-          ssh_cmd_str(@cmd_str, host, @ssh_args),
+          ssh_cmd_str(@cmd_str, host, @ssh_args, @host_ssh_args),
           { :env => opts[:env] }
         )
         cmds
@@ -49,9 +51,9 @@ module Dk::Remote
     private
 
     # escape everything properly; run in sh to ensure full profile is loaded
-    def ssh_cmd_str(cmd_str, host, args)
+    def ssh_cmd_str(cmd_str, host, args, host_args)
       val = "\"#{cmd_str.gsub(/\s+/, ' ')}\"".gsub("\\", "\\\\\\").gsub('"', '\"')
-      "ssh #{args} #{host} -- \"sh -c #{val}\""
+      "ssh #{args} #{host_args[host.to_s]} #{host} -- \"sh -c #{val}\""
     end
 
     def build_output_lines(host, local_cmd_output_lines)

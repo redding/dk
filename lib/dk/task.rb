@@ -95,8 +95,9 @@ module Dk
       def dk_build_ssh_opts(opts)
         opts ||= {}
         opts.merge({
-          :hosts    => dk_lookup_ssh_hosts(opts[:hosts]),
-          :ssh_args => dk_lookup_ssh_args(opts[:ssh_args])
+          :hosts         => dk_lookup_ssh_hosts(opts[:hosts]),
+          :ssh_args      => dk_lookup_ssh_args(opts[:ssh_args]),
+          :host_ssh_args => dk_lookup_host_ssh_args(opts[:host_ssh_args]),
         })
       end
 
@@ -113,6 +114,10 @@ module Dk
 
       def dk_lookup_ssh_args(opts_args)
         opts_args || @dk_runner.ssh_args
+      end
+
+      def dk_lookup_host_ssh_args(opts_args)
+        opts_args || @dk_runner.host_ssh_args
       end
 
     end

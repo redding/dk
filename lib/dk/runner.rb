@@ -18,8 +18,9 @@ module Dk
       @params = Hash.new{ |h, k| raise ArgumentError, "no param named `#{k}`" }
       @params.merge!(dk_normalize_params(opts[:params]))
 
-      @ssh_hosts = opts[:ssh_hosts] || Config::DEFAULT_SSH_HOSTS.dup
-      @ssh_args  = opts[:ssh_args]  || Config::DEFAULT_SSH_ARGS.dup
+      @ssh_hosts     = opts[:ssh_hosts]     || Config::DEFAULT_SSH_HOSTS.dup
+      @ssh_args      = opts[:ssh_args]      || Config::DEFAULT_SSH_ARGS.dup
+      @host_ssh_args = opts[:host_ssh_args] || Config::DEFAULT_HOST_SSH_ARGS.dup
 
       @logger = opts[:logger] || NullLogger.new
     end

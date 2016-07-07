@@ -28,9 +28,10 @@ class Dk::ConfigRunner
     subject{ @runner }
 
     should "initialize using the config's values" do
-      assert_equal @config.params,    subject.params
-      assert_equal @config.ssh_hosts, subject.ssh_hosts
-      assert_equal @config.ssh_args,  subject.ssh_args
+      assert_equal @config.params,        subject.params
+      assert_equal @config.ssh_hosts,     subject.ssh_hosts
+      assert_equal @config.ssh_args,      subject.ssh_args
+      assert_equal @config.host_ssh_args, subject.host_ssh_args
     end
 
   end
