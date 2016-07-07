@@ -27,6 +27,7 @@ class Dk::Config
       assert_equal Hash.new,  subject::DEFAULT_PARAMS
       assert_equal Hash.new,  subject::DEFAULT_SSH_HOSTS
       assert_equal '',        subject::DEFAULT_SSH_ARGS
+      assert_equal Hash.new,  subject::DEFAULT_TASKS
     end
 
   end
@@ -38,15 +39,17 @@ class Dk::Config
     end
     subject{ @config }
 
-    should have_readers :init_procs, :params
+    should have_readers :init_procs, :params, :tasks
     should have_imeths :init
     should have_imeths :before, :after, :prepend_before, :prepend_after
+    should have_imeths :task
 
     should "default its attrs" do
       assert_equal @config_class::DEFAULT_INIT_PROCS, subject.init_procs
       assert_equal @config_class::DEFAULT_PARAMS,     subject.params
       assert_equal @config_class::DEFAULT_SSH_HOSTS,  subject.ssh_hosts
       assert_equal @config_class::DEFAULT_SSH_ARGS,   subject.ssh_args
+      assert_equal @config_class::DEFAULT_TASKS,      subject.tasks
     end
 
     should "instance eval its init procs on init" do
@@ -87,6 +90,25 @@ class Dk::Config
       subject.prepend_after(subj_task_class, cb_task_class, cb_params)
       assert_equal cb_task_class, subj_task_class.after_callbacks.first.task_class
       assert_equal cb_params,     subj_task_class.after_callbacks.first.params
+    end
+
+    should "add callable tasks" do
+      assert_empty subject.tasks
+
+      task_name  = Factory.string
+      task_class = Class.new{ include Dk::Task }
+      subject.task(task_name, task_class)
+
+      assert_equal task_class, subject.tasks[task_name]
+    end
+
+    should "complain when adding a callable task that isn't a Dk::Task" do
+      assert_raises(ArgumentError) do
+        subject.task(Factory.string, Factory.string)
+      end
+      assert_raises(ArgumentError) do
+        subject.task(Factory.string, Class.new)
+      end
     end
 
   end
