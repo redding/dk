@@ -25,7 +25,16 @@ end
 
 Now route this task with a name so it can be run from the CLI:
 
-TODO: router example
+```ruby
+# in config/tasks.rb or whatever
+require 'dk'
+
+Dk.configure do
+
+  task 'my-task', MyTask
+
+end
+```
 
 Now run this task using the CLI:
 
@@ -37,7 +46,137 @@ TODO
 
 ### Config
 
-TODO
+Dk stores settings in a config.  To modify the settings add a configure block:
+
+```ruby
+require 'dk'
+
+Dk.configure do
+
+  # settings go here...
+
+end
+```
+
+There are a number of DSL settings that can be configured.  Use these to set param values, set default ssh settings, configure tasks that can be called from the CLI, etc.
+
+##### `set_param`
+
+```ruby
+require 'dk'
+
+Dk.configure do
+
+  set_param 'app_name',         'myapp'
+  set_param 'number_of_things', 5
+  # ...
+
+end
+```
+
+Use the `set_param` method to set new global param values.  Any tasks that are run will have these param values available to them using the tasks's `params` helper method.
+
+##### `before`, `prepend_before`, `after`, `prepend_after`
+
+You can configure tasks as callbacks on other tasks using these helper methods:
+
+```ruby
+require 'dk'
+
+Dk.configure do
+
+  before         MyTask, MyBeforeTask
+  prepend_before MyTask, MyOtherBeforeTask, 'some_param' => 'some_value'
+  after          MyTask, MyAfterTask,       'some_param' => 'some_value'
+  prepend_after  MyTask, MyOtherAfterTask
+
+end
+```
+
+Each callback can be optionally configured with a set of params.  This can be especially useful when you want to control the order 3rd-party tasks are run in.
+
+The callback tasks will be run in the order they are added before/after the `run!` method of the task they are added to.  The [`halt` task helper](https://github.com/redding/dk#halt) does not stop these callbacks from running.
+
+##### `ssh_hosts`, `ssh_args`, `host_ssh_args`
+
+```ruby
+require 'dk'
+
+Dk.configure do
+
+  ssh_hosts 'all_servers', '1.example.com',
+                           '2.example.com',
+                           '3.example.com',
+                           'user@4.example.com',
+                           'user@5.example.com'
+
+  ssh_hosts 'primary_server', '1.example.com'
+
+  ssh_hosts 'web_servers', '1.example.com',
+                           '2.example.com'
+
+  ssh_hosts 'db_server', '3.example.com'
+
+  ssh_hosts 'bg_servers', 'user@4.example.com',
+                          'user@5.example.com'
+
+  # these are custom args to use on all SSH cmds
+  ssh_args "-o ForwardAgent=yes "\
+           "-o ControlMaster=auto "\
+           "-o ControlPersist=60s "\
+           "-o UserKnownHostsFile=/dev/null "\
+           "-o StrictHostKeyChecking=no "\
+           "-o ConnectTimeout=10 "\
+           "-o LogLevel=quiet "
+
+  # these two hosts use custom SSH ports
+  host_ssh_args 'user@4.example.com', '-p 12345'
+  host_ssh_args 'user@5.example.com', '-p 12345'
+
+end
+```
+
+Use the `ssh_hosts` method to define a named set of hosts.  These hosts can now be referred to by name when running `ssh` cmds in tasks.
+
+Use the `ssh_args` and `host_ssh_args` methods to configure ssh cmd arguments to apply to all SSH cmds.  The host-specific args are only applied to SSH cmds run on the specific host.
+
+##### `log_pattern`, `log_file`, `log_file_pattern`
+
+```ruby
+require 'dk'
+
+Dk.configure do
+
+  log_pattern '[%-5l] : %m\n' # [INFO] : blah blah\n"
+
+  log_file         "log/tasks.log"    # log all task run details to this file
+  log_file_pattern '[%d %-5l] : %m\n' # [<datetime> INFO] : blah blah\n"
+
+end
+```
+
+Use the `log_pattern` and `log_file_pattern` methods to override the default log entry format for stdout and file logging respectively.  By default, stdout logs just log the message while the file logs log the date level and message.  Uese these to tweak as desired.  Dk uses [Logsly](https://github.com/redding/logsly) for its loggers so check out its README for [details on using patterns](https://github.com/redding/logsly#patterns).
+
+Use the `log_file` method to turn on file logging.  If given a file path, Dk will log all task run details (verbosely) to the file.  This is handy when problems occur running tasks in non-verbose mode.  File logging is always done verbosely so you can use this to refere to the details of previous task runs even though you may not have seen these details in your stdout logs.
+
+##### `task`
+
+```ruby
+require 'dk'
+
+Dk.configure do
+
+  task 'deploy',      MyDeployTask
+  task 'deploy:setup' MyDeploySetupTask
+
+  # ...
+
+end
+```
+
+Use the `task` method to configure tasks that are runnable via the CLI.  This also will display information about the task when using the `--help option in the CLI.
+
+**Note**: only tasks configured using this method will be runnable from the CLI.
 
 ### Task
 
@@ -63,9 +202,9 @@ class MyTask
 end
 ```
 
-Use the `param` helper to access named params that the task was run with.  Params can be two ways: globally from the main config or from callback definitions and `run_task` calls.
+Use the `param` helper to access named params that the task was run with.  Params can be added two ways: globally [from the main config](https://github.com/redding/dk#set_param) or from [callback definitions](https://github.com/redding/dk#task-callbacks) and [`run_task` calls](https://github.com/redding/dk#run_task).
 
-Use the `set_param` method to set new global param values like you would on the main config.  Any subsequent tasks that are run will have this param value available to them.
+Use the `set_param` method to set new global param values like you would on the main config.  Any subsequent tasks that are run will have these param values available to them.
 
 ##### `ssh_hosts`
 
@@ -77,9 +216,13 @@ class MyTask
 
   def run!
     ssh_hosts('my-app-servers') # => nil
+    ssh_hosts('my-web-servers') # => nil
 
-    ssh_hosts('my-app-servers', ['myserver1.example.com'])
-    ssh_hosts('my-app-servers') # => ['myserver1.example.com']
+    ssh_hosts 'my-app-servers', '1.example.com'
+    ssh_hosts 'my-web-servers', '2.example.com', '3.example.com'
+
+    ssh_hosts('my-app-servers') # => ['1.example.com']
+    ssh_hosts('my-web-servers') # => ['2.example.com', '3.example.com']
   end
 
 end
@@ -99,7 +242,7 @@ class MyTask
   def run!
     # ... do something before ...
 
-    run_task MyOtherTask, :some => 'param value'
+    run_task MyOtherTask, 'some_param' => 'some value'
 
     # ... do something after ...
   end
@@ -220,8 +363,8 @@ class MyTask
   include Dk::Task
 
   before         MyBeforeTask
-  prepend_before MyOtherBeforeTask, :some => 'param'
-  after          MyAfterTask,       :some => 'param'
+  prepend_before MyOtherBeforeTask, 'some_param' => 'some_value'
+  after          MyAfterTask,       'some_param' => 'some_value'
   prepend_after  MyOtherAfterTask
 
   def run!
@@ -231,7 +374,7 @@ class MyTask
 end
 ```
 
-Each callback can be optionally configured with a set of params.  These tasks will be run in the order they are added before/after the `run!` method of the current task.  Using `halt` does not affect whether callbacks are run or not.
+Each callback can be optionally configured with a set of params.  These tasks will be run in the order they are added before/after the `run!` method of the current task.  The [`halt` helper](https://github.com/redding/dk#halt) does not stop these callbacks from running.
 
 #### Default SSH Hosts
 
