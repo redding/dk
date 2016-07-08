@@ -4,6 +4,7 @@ require 'dk/tree_runner'
 require 'dk/config'
 require 'dk/dry_runner'
 require 'dk/has_the_runs'
+require 'dk/null_logger'
 require 'dk/task'
 require 'dk/task_run'
 
@@ -33,6 +34,10 @@ class Dk::TreeRunner
       @runner = @runner_class.new(config)
     end
     subject{ @runner }
+
+    should "force a null logger to disable logging" do
+      assert_instance_of Dk::NullLogger, subject.logger
+    end
 
   end
 
