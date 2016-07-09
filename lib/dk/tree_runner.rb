@@ -1,5 +1,6 @@
 require 'dk/dry_runner'
 require 'dk/has_the_runs'
+require 'dk/null_logger'
 require 'dk/task_run'
 
 module Dk
@@ -7,17 +8,15 @@ module Dk
   class TreeRunner < DryRunner
     include HasTheRuns
 
-    def initialize(*args)
-      super
+    def initialize(config)
+      super(config, :logger => NullLogger.new) # disable any logging
       @task_run_stack = [self]
     end
 
     def run(*args)
       super
-      # TODO: log out view of nested task runs
+      # TODO: puts out view of nested task runs
     end
-
-    # TODO: disable any logging
 
     private
 

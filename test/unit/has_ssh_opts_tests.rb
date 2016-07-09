@@ -41,7 +41,7 @@ module Dk::HasSSHOpts
       group_name = Factory.string
       hosts      = Factory.hosts
 
-      assert_equal Hash.new, subject.ssh_hosts
+      assert_equal Dk::Config::DEFAULT_SSH_HOSTS, subject.ssh_hosts
       assert_nil subject.ssh_hosts(group_name)
 
       assert_equal hosts, subject.ssh_hosts(group_name, hosts)
@@ -54,7 +54,7 @@ module Dk::HasSSHOpts
     should "know its ssh args" do
       args = Factory.string
 
-      assert_equal "",   subject.ssh_args
+      assert_equal Dk::Config::DEFAULT_SSH_ARGS, subject.ssh_args
       assert_equal args, subject.ssh_args(args)
       assert_equal args, subject.ssh_args
     end

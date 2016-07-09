@@ -18,4 +18,17 @@ class Dk::DkRunner
 
   end
 
+  class InitTests < UnitTests
+    desc "when init"
+    setup do
+      @config = Dk::Config.new
+    end
+
+    should "be init with a config instance" do
+      assert_nothing_raised{ @runner_class.new(@config) }
+      assert_raises(ArgumentError){ @runner_class.new }
+    end
+
+  end
+
 end

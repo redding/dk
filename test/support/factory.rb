@@ -19,4 +19,8 @@ module Factory
     Factory.integer(3).times.map{ "#{Factory.string}.example.com" }
   end
 
+  def self.log_file
+    ROOT_PATH.join("test/support/log/#{Factory.string}.txt")
+  end
+
 end

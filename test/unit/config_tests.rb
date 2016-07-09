@@ -1,6 +1,7 @@
 require 'assert'
 require 'dk/config'
 
+require 'logsly'
 require 'dk/has_set_param'
 require 'dk/has_ssh_opts'
 require 'dk/task'
@@ -23,12 +24,19 @@ class Dk::Config
     end
 
     should "know its defaults" do
-      assert_equal Array.new, subject::DEFAULT_INIT_PROCS
-      assert_equal Hash.new,  subject::DEFAULT_PARAMS
-      assert_equal Hash.new,  subject::DEFAULT_SSH_HOSTS
-      assert_equal '',        subject::DEFAULT_SSH_ARGS
-      assert_equal Hash.new,  subject::DEFAULT_HOST_SSH_ARGS
-      assert_equal Hash.new,  subject::DEFAULT_TASKS
+      assert_equal Array.new,          subject::DEFAULT_INIT_PROCS
+      assert_equal Hash.new,           subject::DEFAULT_PARAMS
+      assert_equal Hash.new,           subject::DEFAULT_SSH_HOSTS
+      assert_equal '',                 subject::DEFAULT_SSH_ARGS
+      assert_equal Hash.new,           subject::DEFAULT_HOST_SSH_ARGS
+      assert_equal Hash.new,           subject::DEFAULT_TASKS
+      assert_equal "%m\n",             subject::DEFAULT_LOG_PATTERN
+      assert_equal '[%d %-5l] : %m\n', subject::DEFAULT_LOG_FILE_PATTERN
+    end
+
+    should "know the log levels to use for each output" do
+      assert_equal 'info',  subject::STDOUT_LOG_LEVEL
+      assert_equal 'debug', subject::FILE_LOG_LEVEL
     end
 
   end
@@ -44,14 +52,21 @@ class Dk::Config
     should have_imeths :init
     should have_imeths :before, :after, :prepend_before, :prepend_after
     should have_imeths :task
+    should have_imeths :log_pattern, :log_file, :log_file_pattern
+    should have_imeths :dk_logger_stdout_output_name, :dk_logger_file_output_name
+    should have_imeths :dk_logger
 
     should "default its attrs" do
-      assert_equal @config_class::DEFAULT_INIT_PROCS,    subject.init_procs
-      assert_equal @config_class::DEFAULT_PARAMS,        subject.params
-      assert_equal @config_class::DEFAULT_SSH_HOSTS,     subject.ssh_hosts
-      assert_equal @config_class::DEFAULT_SSH_ARGS,      subject.ssh_args
-      assert_equal @config_class::DEFAULT_HOST_SSH_ARGS, subject.host_ssh_args
-      assert_equal @config_class::DEFAULT_TASKS,         subject.tasks
+      assert_equal @config_class::DEFAULT_INIT_PROCS,       subject.init_procs
+      assert_equal @config_class::DEFAULT_PARAMS,           subject.params
+      assert_equal @config_class::DEFAULT_SSH_HOSTS,        subject.ssh_hosts
+      assert_equal @config_class::DEFAULT_SSH_ARGS,         subject.ssh_args
+      assert_equal @config_class::DEFAULT_HOST_SSH_ARGS,    subject.host_ssh_args
+      assert_equal @config_class::DEFAULT_TASKS,            subject.tasks
+      assert_equal @config_class::DEFAULT_LOG_PATTERN,      subject.log_pattern
+      assert_equal @config_class::DEFAULT_LOG_FILE_PATTERN, subject.log_file_pattern
+
+      assert_nil subject.log_file
     end
 
     should "instance eval its init procs on init" do
@@ -111,6 +126,112 @@ class Dk::Config
       assert_raises(ArgumentError) do
         subject.task(Factory.string, Class.new)
       end
+    end
+
+    should "know its log pattern" do
+      pattern = Factory.string
+
+      assert_equal @config_class::DEFAULT_LOG_PATTERN, subject.log_pattern
+      assert_equal pattern, subject.log_pattern(pattern)
+      assert_equal pattern, subject.log_pattern
+    end
+
+    should "know its log file" do
+      file = Factory.file_path
+
+      assert_nil subject.log_file
+      assert_equal file, subject.log_file(file)
+      assert_equal file, subject.log_file
+    end
+
+    should "know its log file pattern" do
+      pattern = Factory.string
+
+      assert_equal @config_class::DEFAULT_LOG_FILE_PATTERN, subject.log_file_pattern
+      assert_equal pattern, subject.log_file_pattern(pattern)
+      assert_equal pattern, subject.log_file_pattern
+    end
+
+    should "know its logger output names" do
+      exp = "dk-config-#{subject.object_id}-stdout"
+      assert_equal exp, subject.dk_logger_stdout_output_name
+
+      exp = "dk-config-#{subject.object_id}-file"
+      assert_equal exp, subject.dk_logger_file_output_name
+    end
+
+    should "know its logger" do
+      logger = subject.dk_logger
+
+      assert_instance_of LogslyLogger, logger
+      assert_equal subject, logger.config
+    end
+
+  end
+
+  class LogslyLoggerTests < UnitTests
+    desc "LogslyLogger"
+    setup do
+      @logger_class = LogslyLogger
+    end
+    subject{ @logger_class }
+
+    should "be a logsly logger and know its log type" do
+      assert_includes Logsly, subject
+      assert_equal 'dk', subject::LOG_TYPE
+    end
+
+  end
+
+  class LogslyLoggerInitTests < LogslyLoggerTests
+    desc "when init"
+    setup do
+      @config = @config_class.new
+      @logger = @logger_class.new(@config)
+    end
+    subject{ @logger }
+
+    should "know its log type" do
+      assert_equal @logger_class::LOG_TYPE, subject.log_type
+    end
+
+    should "have only a logsly stdout output" do
+      assert_equal 1, subject.outputs.size
+      assert_equal @config.dk_logger_stdout_output_name, subject.outputs.first
+
+      out = Logsly.outputs(@config.dk_logger_stdout_output_name)
+      assert_instance_of Logsly::Outputs::Stdout, out
+
+      data = out.data(subject)
+      assert_equal @config_class::STDOUT_LOG_LEVEL, data.level
+      assert_equal @config.log_pattern,             data.pattern
+    end
+
+  end
+
+  class LogslyLoggerInitWithLogFileTests < LogslyLoggerInitTests
+    desc "with a log file"
+    setup do
+      @config.log_file Factory.log_file
+      @logger = @logger_class.new(@config)
+    end
+    teardown do
+      @config.log_file.delete
+    end
+
+    should "have a logsly file output in addition to the stdout output" do
+      assert_equal 2, subject.outputs.size
+      assert_equal @config.dk_logger_stdout_output_name, subject.outputs.first
+      assert_equal @config.dk_logger_file_output_name,   subject.outputs.last
+
+      out = Logsly.outputs(@config.dk_logger_file_output_name)
+      assert_instance_of Logsly::Outputs::File, out
+
+      data = out.data(subject)
+      exp = File.expand_path(@config.log_file, ENV['PWD'])
+      assert_equal exp, data.path
+      assert_equal @config_class::FILE_LOG_LEVEL, data.level
+      assert_equal @config.log_file_pattern,      data.pattern
     end
 
   end
