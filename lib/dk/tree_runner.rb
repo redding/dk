@@ -8,14 +8,17 @@ module Dk
   class TreeRunner < DryRunner
     include HasTheRuns
 
-    def initialize(config)
+    def initialize(config, kernel)
       super(config, :logger => NullLogger.new) # disable any logging
+
       @task_run_stack = [self]
+      @kernel         = kernel
     end
 
     def run(*args)
-      super
-      # TODO: puts out view of nested task runs
+      task = super
+      @kernel.puts "TODO: task tree output goes here"
+      task
     end
 
     private

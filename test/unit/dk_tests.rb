@@ -12,7 +12,7 @@ module Dk
     end
     subject{ @dk_module }
 
-    should have_imeths :config, :configure, :init
+    should have_imeths :config, :configure, :init, :reset
 
     should "know its config" do
       assert_instance_of Config, subject.config
@@ -33,6 +33,15 @@ module Dk
 
       subject.init
       assert_true config_init_called
+    end
+
+    should "reset itself by rewriting the config with a new instance" do
+      config_obj_id = subject.config.object_id
+      subject.init
+      assert_equal config_obj_id, subject.config.object_id
+
+      subject.reset
+      assert_not_equal config_obj_id, subject.config.object_id
     end
 
   end

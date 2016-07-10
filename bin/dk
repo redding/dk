@@ -1,0 +1,7 @@
+#!/usr/bin/env ruby
+#
+# Copyright (c) 2016 Kelly Redding & Collin Redding
+#
+
+require 'dk/cli'
+Dk::CLI.run ARGV

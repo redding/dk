@@ -116,7 +116,7 @@ class Dk::Config
       task_class = Class.new{ include Dk::Task }
       subject.task(task_name, task_class)
 
-      assert_equal task_class, subject.tasks[task_name]
+      assert_equal task_class, subject.task(task_name)
     end
 
     should "complain when adding a callable task that isn't a Dk::Task" do
@@ -125,6 +125,12 @@ class Dk::Config
       end
       assert_raises(ArgumentError) do
         subject.task(Factory.string, Class.new)
+      end
+    end
+
+    should "complain when looking up a named task that hasn't been configured" do
+      assert_raises(UnknownTaskError) do
+        subject.task(Factory.string)
       end
     end
 

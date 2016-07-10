@@ -16,4 +16,8 @@ module Dk
     self.config.init
   end
 
+  def self.reset
+    @config = Config.new
+  end
+
 end
