@@ -80,8 +80,8 @@ module Dk
         @dk_runner.set_param(key, value)
       end
 
-      def ssh_hosts(group_name = nil, value = nil)
-        @dk_runner.ssh_hosts(group_name, value)
+      def ssh_hosts(group_name = nil, *values)
+        @dk_runner.ssh_hosts(group_name, *values)
       end
 
       def halt

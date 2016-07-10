@@ -12,9 +12,9 @@ module Dk
 
     module InstanceMethods
 
-      def ssh_hosts(group_name = nil, value = nil)
+      def ssh_hosts(group_name = nil, *values)
         return @ssh_hosts if group_name.nil?
-        @ssh_hosts[group_name.to_s] = value if !value.nil?
+        @ssh_hosts[group_name.to_s] = values.flatten if !values.empty?
         @ssh_hosts[group_name.to_s]
       end
 

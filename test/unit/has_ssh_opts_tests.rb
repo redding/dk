@@ -47,6 +47,9 @@ module Dk::HasSSHOpts
       assert_equal hosts, subject.ssh_hosts(group_name, hosts)
       assert_equal hosts, subject.ssh_hosts(group_name)
 
+      assert_equal hosts, subject.ssh_hosts(group_name, *hosts)
+      assert_equal hosts, subject.ssh_hosts(group_name)
+
       exp = { group_name => hosts }
       assert_equal exp, subject.ssh_hosts
     end
