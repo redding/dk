@@ -9,12 +9,18 @@ module Dk
     include Dk::HasSetParam
     include Dk::HasSSHOpts
 
+    UnknownTaskError = Class.new(ArgumentError) do
+      def initialize(task_name)
+        super("No task named #{task_name.inspect}")
+      end
+    end
+
     DEFAULT_INIT_PROCS       = [].freeze
     DEFAULT_PARAMS           = {}.freeze
     DEFAULT_SSH_HOSTS        = {}.freeze
     DEFAULT_SSH_ARGS         = ''.freeze
     DEFAULT_HOST_SSH_ARGS    = Hash.new{ |h, k| h[k] = DEFAULT_SSH_ARGS }
-    DEFAULT_TASKS            = {}.freeze
+    DEFAULT_TASKS            = Hash.new{ |h, k| raise UnknownTaskError.new(k) }.freeze
     DEFAULT_LOG_PATTERN      = "%m\n".freeze
     DEFAULT_LOG_FILE_PATTERN = '[%d %-5l] : %m\n'.freeze
 
@@ -59,11 +65,14 @@ module Dk
       subject_task_class.prepend_after(callback_task_class, params)
     end
 
-    def task(name, task_class)
-      if !task_class.kind_of?(Class) || !task_class.include?(Dk::Task)
-        raise ArgumentError, "#{task_class.inspect} is not a Dk::Task"
+    def task(name, task_class = nil)
+      if !task_class.nil?
+        if !task_class.kind_of?(Class) || !task_class.include?(Dk::Task)
+          raise ArgumentError, "#{task_class.inspect} is not a Dk::Task"
+        end
+        @tasks[name.to_s] = task_class
       end
-      @tasks[name.to_s] = task_class
+      @tasks[name.to_s]
     end
 
     def log_pattern(value = nil)

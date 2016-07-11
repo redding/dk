@@ -1,6 +1,7 @@
 require 'assert'
 require 'dk/tree_runner'
 
+require 'stringio'
 require 'dk/config'
 require 'dk/dry_runner'
 require 'dk/has_the_runs'
@@ -30,8 +31,9 @@ class Dk::TreeRunner
   class InitTests < UnitTests
     desc "when init"
     setup do
+      @kernal_puts_output = ""
       config = Dk::Config.new
-      @runner = @runner_class.new(config)
+      @runner = @runner_class.new(config, StringIO.new(@kernal_puts_output))
     end
     subject{ @runner }
 
@@ -82,6 +84,11 @@ class Dk::TreeRunner
       sub_sub_task_run = sub_task_run.runs.first
       assert_equal TestTask::SubSubTask,             sub_sub_task_run.task_class
       assert_equal subject.sub_task.sub_task_params, sub_sub_task_run.params
+    end
+
+    should "output some info describing the tree of tasks that were run" do
+      exp = "TODO: task tree output goes here\n"
+      assert_equal exp, @kernal_puts_output
     end
 
   end
