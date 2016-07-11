@@ -14,6 +14,8 @@ require 'dk/task'
 class MyTask
   include Dk::Task
 
+  desc "my task that does something great"
+
   def run!
     log_info "this task does something"
 
@@ -38,11 +40,51 @@ end
 
 Now run this task using the CLI:
 
-TODO: CLI example
+```
+$ dk -T
+my-task # my task that does something great
+$ dk my-task
+```
 
 ### CLI
 
-TODO
+```
+$ dk --help
+Usage: dk [TASKS] [options]
+
+Tasks:
+my-other-task # my other task that does something great
+my-task       # my task that does something great
+
+Options:
+    -T, --[no-]list-tasks            list all tasks available to run
+    -d, --[no-]dry-run               run the tasks without executing any local/remote cmds
+    -t, --[no-]tree                  print out the tree of tasks/sub-tasks that would be run
+        --version
+        --help
+```
+
+##### `--list-tasks` option
+
+Use this option (or its `-T` abbrev) to list out all tasks that are available to run.  This is similar to the `-T` option on cap and rake.
+
+```
+$ dk -T
+my-other-task # my other task that does something great
+my-task       # my task that does something great
+```
+
+##### `--dry-run` option
+
+This option runs the tasks and logs everything just like the live runner does.  However, this runner disables all system commands: both local commands and remote ssh commands.  Use this to see what a task would do do without running any of the system commands.
+
+##### `--tree` option
+
+This option runs the tasks like the live runner does and disables all system commands like the `--dry-run` option does.  However, this option also disables all logging and tracks all tasks and sub-tasks that are run.  It then outputs the tree of tasks that was run:
+
+TODO: show task tree output example
+
+Use this to show the user all the tasks/sub-tasks that are run and which parent tasks are running them.
 
 ### Config
 
