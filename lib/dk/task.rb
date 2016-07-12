@@ -36,6 +36,10 @@ module Dk
         end
       end
 
+      def dk_dsl_ssh_hosts
+        @dk_dsl_ssh_hosts ||= self.instance_eval(&self.class.ssh_hosts)
+      end
+
       def ==(other_task)
         self.class == other_task.class
       end
@@ -104,12 +108,8 @@ module Dk
       def dk_lookup_ssh_hosts(opts_hosts)
         ssh_hosts[opts_hosts] ||
         opts_hosts ||
-        ssh_hosts[dk_dsl_ssh_hosts] ||
-        dk_dsl_ssh_hosts
-      end
-
-      def dk_dsl_ssh_hosts
-        @dk_dsl_ssh_hosts ||= self.instance_eval(&self.class.ssh_hosts)
+        ssh_hosts[self.dk_dsl_ssh_hosts] ||
+        self.dk_dsl_ssh_hosts
       end
 
       def dk_lookup_ssh_args(opts_args)
@@ -135,6 +135,9 @@ module Dk
 
       def before_callbacks; @before_callbacks ||= []; end
       def after_callbacks;  @after_callbacks  ||= []; end
+
+      def before_callback_task_classes; self.before_callbacks.map(&:task_class) end
+      def after_callback_task_classes;  self.after_callbacks.map(&:task_class)  end
 
       def before(task_class, params = nil)
         self.before_callbacks << Callback.new(task_class, params)
