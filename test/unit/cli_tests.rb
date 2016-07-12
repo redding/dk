@@ -28,7 +28,7 @@ class Dk::CLI
 
       @scmd_test_mode = ENV['SCMD_TEST_MODE']
       Dk.reset
-      ENV['DK_CONFIG'] = ROOT_PATH.join('test/support/config/tasks.rb')
+      ENV['DK_CONFIG'] = ROOT_PATH.join('test/support/config/tasks.rb').to_s
       @cli = Dk::CLI.new(@kernel_spy)
     end
     teardown do
