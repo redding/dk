@@ -15,6 +15,8 @@ module Dk::Task
 
     should have_imeths :description, :desc
     should have_imeths :before_callbacks, :after_callbacks
+    should have_imeths :before_callback_task_classes
+    should have_imeths :after_callback_task_classes
     should have_imeths :before, :after, :prepend_before, :prepend_after
     should have_imeths :ssh_hosts
 
@@ -37,36 +39,50 @@ module Dk::Task
     should "know its default callbacks" do
       assert_equal [], subject.before_callbacks
       assert_equal [], subject.after_callbacks
+      assert_equal [], subject.before_callback_task_classes
+      assert_equal [], subject.after_callback_task_classes
     end
 
     should "append callbacks" do
       task_class = Factory.string
       params     = Factory.string
 
-      subject.before_callbacks << Factory.string
+      subject.before_callbacks << Dk::Task::Callback.new(Factory.string, {})
       subject.before(task_class, params)
       assert_equal task_class, subject.before_callbacks.last.task_class
       assert_equal params,     subject.before_callbacks.last.params
 
-      subject.after_callbacks << Factory.string
+      exp = subject.before_callbacks.map(&:task_class)
+      assert_equal exp, subject.before_callback_task_classes
+
+      subject.after_callbacks << Dk::Task::Callback.new(Factory.string, {})
       subject.after(task_class, params)
       assert_equal task_class, subject.after_callbacks.last.task_class
       assert_equal params,     subject.after_callbacks.last.params
+
+      exp = subject.after_callbacks.map(&:task_class)
+      assert_equal exp, subject.after_callback_task_classes
     end
 
     should "prepend callbacks" do
       task_class = Factory.string
       params     = Factory.string
 
-      subject.before_callbacks << Factory.string
+      subject.before_callbacks << Dk::Task::Callback.new(Factory.string, {})
       subject.prepend_before(task_class, params)
       assert_equal task_class, subject.before_callbacks.first.task_class
       assert_equal params,     subject.before_callbacks.first.params
 
-      subject.after_callbacks << Factory.string
+      exp = subject.before_callbacks.map(&:task_class)
+      assert_equal exp, subject.before_callback_task_classes
+
+      subject.after_callbacks << Dk::Task::Callback.new(Factory.string, {})
       subject.prepend_after(task_class, params)
       assert_equal task_class, subject.after_callbacks.first.task_class
       assert_equal params,     subject.after_callbacks.first.params
+
+      exp = subject.after_callbacks.map(&:task_class)
+      assert_equal exp, subject.after_callback_task_classes
     end
 
     should "know its ssh hosts proc" do
@@ -98,12 +114,23 @@ module Dk::Task
     end
     subject{ @task }
 
-    should have_imeths :dk_run, :run!
+    should have_imeths :dk_run, :run!, :dk_dsl_ssh_hosts
 
     should "not implement its run! method" do
       assert_raises NotImplementedError do
         subject.run!
       end
+    end
+
+    should "know its configured DSL ssh hosts" do
+      assert_nil subject.dk_dsl_ssh_hosts
+
+      hosts      = Factory.hosts
+      task_class = Class.new{ include Dk::Task; ssh_hosts hosts; }
+      runner     = test_runner(task_class)
+      task       = runner.task
+
+      assert_equal hosts, task.dk_dsl_ssh_hosts
     end
 
     should "know if it is equal to another task" do
