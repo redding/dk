@@ -23,4 +23,8 @@ module Factory
     ROOT_PATH.join("test/support/log/#{Factory.string}.txt")
   end
 
+  def self.task_callback(task_class, params = nil)
+    Dk::Task::Callback.new(task_class, params || {})
+  end
+
 end

@@ -47,7 +47,7 @@ module Dk::Task
       task_class = Factory.string
       params     = Factory.string
 
-      subject.before_callbacks << Dk::Task::Callback.new(Factory.string, {})
+      subject.before_callbacks << Factory.task_callback(Factory.string)
       subject.before(task_class, params)
       assert_equal task_class, subject.before_callbacks.last.task_class
       assert_equal params,     subject.before_callbacks.last.params
@@ -55,7 +55,7 @@ module Dk::Task
       exp = subject.before_callbacks.map(&:task_class)
       assert_equal exp, subject.before_callback_task_classes
 
-      subject.after_callbacks << Dk::Task::Callback.new(Factory.string, {})
+      subject.after_callbacks << Factory.task_callback(Factory.string)
       subject.after(task_class, params)
       assert_equal task_class, subject.after_callbacks.last.task_class
       assert_equal params,     subject.after_callbacks.last.params
@@ -68,7 +68,7 @@ module Dk::Task
       task_class = Factory.string
       params     = Factory.string
 
-      subject.before_callbacks << Dk::Task::Callback.new(Factory.string, {})
+      subject.before_callbacks << Factory.task_callback(Factory.string)
       subject.prepend_before(task_class, params)
       assert_equal task_class, subject.before_callbacks.first.task_class
       assert_equal params,     subject.before_callbacks.first.params
@@ -76,7 +76,7 @@ module Dk::Task
       exp = subject.before_callbacks.map(&:task_class)
       assert_equal exp, subject.before_callback_task_classes
 
-      subject.after_callbacks << Dk::Task::Callback.new(Factory.string, {})
+      subject.after_callbacks << Factory.task_callback(Factory.string)
       subject.prepend_after(task_class, params)
       assert_equal task_class, subject.after_callbacks.first.task_class
       assert_equal params,     subject.after_callbacks.first.params
