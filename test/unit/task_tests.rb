@@ -252,6 +252,17 @@ module Dk::Task
       assert_equal exp, runner_ssh_called_with
     end
 
+    should "force any given hosts value to an Array" do
+      runner_ssh_called_with = nil
+      Assert.stub(@runner, :ssh){ |*args| runner_ssh_called_with = args }
+
+      host = Factory.string
+      subject.instance_eval{ ssh(Factory.string, :hosts => host) }
+
+      exp = [host]
+      assert_equal exp, runner_ssh_called_with.last[:hosts]
+    end
+
     should "run ssh cmds and error if not successful" do
       runner_ssh_called_with = nil
       Assert.stub(@runner, :ssh) do |*args|

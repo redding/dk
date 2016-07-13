@@ -106,10 +106,12 @@ module Dk
       end
 
       def dk_lookup_ssh_hosts(opts_hosts)
-        ssh_hosts[opts_hosts] ||
-        opts_hosts ||
-        ssh_hosts[self.dk_dsl_ssh_hosts] ||
-        self.dk_dsl_ssh_hosts
+        [*(
+          ssh_hosts[opts_hosts] ||
+          opts_hosts ||
+          ssh_hosts[self.dk_dsl_ssh_hosts] ||
+          self.dk_dsl_ssh_hosts
+        )]
       end
 
       def dk_lookup_ssh_args(opts_args)
