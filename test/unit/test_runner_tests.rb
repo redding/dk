@@ -23,6 +23,10 @@ class Dk::TestRunner
       assert_includes Dk::HasTheRuns, subject
     end
 
+    should "know its Scmd test mode value" do
+      assert_equal 'yes', subject::SCMD_TEST_MODE_VALUE
+    end
+
   end
 
   class InitTests < UnitTests
@@ -52,7 +56,12 @@ class Dk::TestRunner
     desc "and run"
     setup do
       @params = { Factory.string => Factory.string }
+      @orig_scmd_test_mode = ENV['SCMD_TEST_MODE']
+      ENV['SCMD_TEST_MODE'] = Factory.string
       @task = @runner.run(@params)
+    end
+    teardown do
+      ENV['SCMD_TEST_MODE'] = @orig_scmd_test_mode
     end
     subject{ @task }
 
@@ -96,6 +105,12 @@ class Dk::TestRunner
       assert_equal subject.remote_cmd_str,  rcb.cmd_str
       assert_equal subject.remote_cmd_opts, rcb.cmd_opts
       assert_true rcb.run_called?
+    end
+
+    should "put Scmd in test mode while running" do
+      exp = @runner_class::SCMD_TEST_MODE_VALUE
+      assert_equal     exp, subject.scmd_test_mode_run_value
+      assert_not_equal exp, ENV['SCMD_TEST_MODE']
     end
 
   end
@@ -196,6 +211,7 @@ class Dk::TestRunner
     attr_reader :sub_task
     attr_reader :local_cmd, :local_cmd_bang
     attr_reader :remote_cmd, :remote_cmd_bang
+    attr_reader :scmd_test_mode_run_value
 
     def sub_task_params
       @sub_task_params ||= { Factory.string => Factory.string }
@@ -231,6 +247,8 @@ class Dk::TestRunner
       @local_cmd_bang  = cmd!(self.local_cmd_str, self.local_cmd_opts)
       @remote_cmd      = ssh(self.remote_cmd_str, self.remote_cmd_opts)
       @remote_cmd_bang = ssh!(self.remote_cmd_str, self.remote_cmd_opts)
+
+      @scmd_test_mode_run_value = ENV['SCMD_TEST_MODE']
     end
 
     class SubTask

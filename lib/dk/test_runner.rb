@@ -9,11 +9,17 @@ module Dk
   class TestRunner < Runner
     include HasTheRuns
 
+    SCMD_TEST_MODE_VALUE = 'yes'.freeze
+
     attr_accessor :task_class
 
     # test runners are designed to only run their task
     def run(params = nil)
-      self.task(params).tap(&:dk_run)
+      orig_scmd_test_mode = ENV['SCMD_TEST_MODE']
+      ENV['SCMD_TEST_MODE'] = SCMD_TEST_MODE_VALUE
+      task = self.task(params).tap(&:dk_run)
+      ENV['SCMD_TEST_MODE'] = orig_scmd_test_mode
+      task
     end
 
     # don't run any sub-tasks, just track that a sub-task was run
