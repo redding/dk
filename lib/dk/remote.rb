@@ -4,6 +4,11 @@ require 'dk/local'
 module Dk; end
 module Dk::Remote
 
+  def self.ssh_cmd_str(cmd_str, host, args, host_args)
+    val = "\"#{cmd_str.gsub(/\s+/, ' ')}\"".gsub("\\", "\\\\\\").gsub('"', '\"')
+    "ssh #{args} #{host_args[host.to_s]} #{host} -- \"sh -c #{val}\""
+  end
+
   class BaseCmd
 
     attr_reader :hosts, :ssh_args, :host_ssh_args, :cmd_str, :local_cmds
@@ -52,8 +57,7 @@ module Dk::Remote
 
     # escape everything properly; run in sh to ensure full profile is loaded
     def ssh_cmd_str(cmd_str, host, args, host_args)
-      val = "\"#{cmd_str.gsub(/\s+/, ' ')}\"".gsub("\\", "\\\\\\").gsub('"', '\"')
-      "ssh #{args} #{host_args[host.to_s]} #{host} -- \"sh -c #{val}\""
+      Dk::Remote.ssh_cmd_str(cmd_str, host, args, host_args)
     end
 
     def build_output_lines(host, local_cmd_output_lines)

@@ -1,4 +1,5 @@
 require 'much-plugin'
+require 'dk/remote'
 
 module Dk
 
@@ -88,6 +89,16 @@ module Dk
         @dk_runner.ssh_hosts(group_name, *values)
       end
 
+      def ssh_cmd_str(cmd_str, opts = nil)
+        opts ||= {}
+        Remote.ssh_cmd_str(
+          cmd_str,
+          opts[:host].to_s,
+          dk_lookup_ssh_args(opts[:ssh_args]),
+          dk_lookup_host_ssh_args(opts[:host_ssh_args])
+        )
+      end
+
       def halt
         throw :halt
       end
@@ -101,7 +112,7 @@ module Dk
         opts.merge({
           :hosts         => dk_lookup_ssh_hosts(opts[:hosts]),
           :ssh_args      => dk_lookup_ssh_args(opts[:ssh_args]),
-          :host_ssh_args => dk_lookup_host_ssh_args(opts[:host_ssh_args]),
+          :host_ssh_args => dk_lookup_host_ssh_args(opts[:host_ssh_args])
         })
       end
 
