@@ -2,6 +2,7 @@ require 'assert'
 require 'dk/task'
 
 require 'much-plugin'
+require 'dk/remote'
 require 'dk/runner'
 
 module Dk::Task
@@ -252,6 +253,22 @@ module Dk::Task
       assert_equal exp, runner_ssh_called_with
     end
 
+    should "build ssh cmd strs" do
+      remote_ssh_called_with = nil
+      Assert.stub(Dk::Remote, :ssh_cmd_str){ |*args| remote_ssh_called_with = args }
+
+      cmd_str  = Factory.string
+      cmd_opts = {
+        :host          => Factory.string,
+        :ssh_args      => Factory.string,
+        :host_ssh_args => { Factory.string => Factory.string }
+      }
+      subject.instance_eval{ ssh_cmd_str(cmd_str, cmd_opts) }
+
+      exp = [cmd_str, cmd_opts[:host], cmd_opts[:ssh_args], cmd_opts[:host_ssh_args]]
+      assert_equal exp, remote_ssh_called_with
+    end
+
     should "force any given hosts value to an Array" do
       runner_ssh_called_with = nil
       Assert.stub(@runner, :ssh){ |*args| runner_ssh_called_with = args }
@@ -367,6 +384,26 @@ module Dk::Task
       assert_equal args, runner_ssh_called_with_opts[:ssh_args]
     end
 
+    should "use the runner's ssh args to build ssh cmd strs if none are given" do
+      ssh_args   = Factory.string
+      task_class = Class.new{ include Dk::Task }
+      runner     = test_runner(task_class, :ssh_args => ssh_args)
+      task       = runner.task
+
+      remote_ssh_called_with = nil
+      Assert.stub(Dk::Remote, :ssh_cmd_str){ |*args| remote_ssh_called_with = args }
+
+      cmd_str  = Factory.string
+      cmd_opts = {
+        :host          => Factory.string,
+        :host_ssh_args => { Factory.string => Factory.string }
+      }
+      task.instance_eval{ ssh_cmd_str(cmd_str, cmd_opts) }
+
+      exp = [cmd_str, cmd_opts[:host], ssh_args, cmd_opts[:host_ssh_args]]
+      assert_equal exp, remote_ssh_called_with
+    end
+
     should "use the runner's host ssh args if none are given" do
       args       = { Factory.string => Factory.string }
       task_class = Class.new{ include Dk::Task }
@@ -378,6 +415,26 @@ module Dk::Task
 
       task.instance_eval{ ssh(Factory.string) }
       assert_equal args, runner_ssh_called_with_opts[:host_ssh_args]
+    end
+
+    should "use the runner's host ssh args to build cmd strs if none are given" do
+      ssh_args   = { Factory.string => Factory.string }
+      task_class = Class.new{ include Dk::Task }
+      runner     = test_runner(task_class, :host_ssh_args => ssh_args)
+      task       = runner.task
+
+      remote_ssh_called_with = nil
+      Assert.stub(Dk::Remote, :ssh_cmd_str){ |*args| remote_ssh_called_with = args }
+
+      cmd_str  = Factory.string
+      cmd_opts = {
+        :host     => Factory.string,
+        :ssh_args => Factory.string
+      }
+      task.instance_eval{ ssh_cmd_str(cmd_str, cmd_opts) }
+
+      exp = [cmd_str, cmd_opts[:host], cmd_opts[:ssh_args], ssh_args]
+      assert_equal exp, remote_ssh_called_with
     end
 
   end

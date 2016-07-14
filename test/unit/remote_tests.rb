@@ -36,8 +36,18 @@ module Dk::Remote
           spy.stderr     = [Factory.stderr, nil].sample
         end
       end
+
+      @remote_class = Dk::Remote
     end
-    subject{ @cmd }
+    subject{ @remote_class }
+
+    should have_imeths :ssh_cmd_str
+
+    should "build ssh cmd strs" do
+      h = @host_ssh_args.keys.first
+      exp = ssh_cmd_str(@cmd_str, h, @ssh_args, @host_ssh_args)
+      assert_equal exp, subject.ssh_cmd_str(@cmd_str, h, @ssh_args, @host_ssh_args)
+    end
 
     private
 
@@ -51,9 +61,10 @@ module Dk::Remote
   class BaseCmdTests < UnitTests
     desc "BaseCmd"
     setup do
-      @cmd_class = Dk::Remote::BaseCmd
+      @cmd_class = @remote_class::BaseCmd
       @cmd = @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, @opts)
     end
+    subject{ @cmd }
 
     should have_readers :hosts, :ssh_args, :host_ssh_args, :cmd_str, :local_cmds
     should have_imeths :to_s, :run, :success?, :output_lines
@@ -96,7 +107,7 @@ module Dk::Remote
         subject.ssh_args,
         subject.host_ssh_args
       )
-      exp_opts    = { :env => @opts[:env] }
+      exp_opts = { :env => @opts[:env] }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_spy_new_called_with
 
       cmd = @cmd_class.new(Dk::Local::Cmd, @cmd_str, @opts)
@@ -111,7 +122,7 @@ module Dk::Remote
         cmd.ssh_args,
         cmd.host_ssh_args
       )
-      exp_opts    = { :env => @opts[:env] }
+      exp_opts = { :env => @opts[:env] }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_new_called_with
     end
 
@@ -166,9 +177,10 @@ module Dk::Remote
   class CmdTests < UnitTests
     desc "Cmd"
     setup do
-      @cmd_class = Dk::Remote::Cmd
+      @cmd_class = @remote_class::Cmd
       @cmd = @cmd_class.new(@cmd_str, :hosts => @hosts)
     end
+    subject{ @cmd }
 
     should "build a local cmd for each host with the cmd str, given opts" do
       subject.hosts.each do |host|
@@ -206,9 +218,10 @@ module Dk::Remote
   class CmdSpyTests < UnitTests
     desc "CmdSpy"
     setup do
-      @cmd_class = Dk::Remote::CmdSpy
+      @cmd_class = @remote_class::CmdSpy
       @cmd = @cmd_class.new(@cmd_str, :hosts => @hosts)
     end
+    subject{ @cmd }
 
     should have_readers :cmd_opts
     should have_imeths :stdout=, :stderr=, :exitstatus=
@@ -229,7 +242,7 @@ module Dk::Remote
       exp_opts = { :env => nil }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_spy_new_called_with
 
-      cmd  = @cmd_class.new(@cmd_str, @opts)
+      cmd = @cmd_class.new(@cmd_str, @opts)
       cmd.hosts.each do |host|
         assert_instance_of Dk::Local::CmdSpy, cmd.local_cmds[host]
         exp = ssh_cmd_str(@cmd_str, host, cmd.ssh_args, cmd.host_ssh_args)
