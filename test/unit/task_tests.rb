@@ -582,7 +582,7 @@ module Dk::Task
     end
     subject{ @context }
 
-    should have_imeths :test_runner, :test_task
+    should have_imeths :test_runner, :test_task, :ssh_cmd_str
 
     should "build a test runner for a given handler class" do
       runner = subject.test_runner(@task_class, @args)
@@ -598,6 +598,19 @@ module Dk::Task
 
       exp = subject.test_runner(@task_class, @args).task
       assert_equal exp, task
+    end
+
+    should "build task ssh cmd strs" do
+      task     = subject.test_task(@task_class)
+      cmd_str  = Factory.string
+      cmd_opts = {
+        :host          => Factory.string,
+        :ssh_args      => Factory.string,
+        :host_ssh_args => { Factory.string => Factory.string }
+      }
+
+      exp = task.instance_eval{ ssh_cmd_str(cmd_str, cmd_opts) }
+      assert_equal exp, subject.ssh_cmd_str(task, cmd_str, cmd_opts)
     end
 
   end

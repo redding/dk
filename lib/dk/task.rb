@@ -197,6 +197,10 @@ module Dk
           test_runner(task_class, args).task
         end
 
+        def ssh_cmd_str(task, *args)
+          task.instance_eval{ ssh_cmd_str(*args) }
+        end
+
       end
 
     end
