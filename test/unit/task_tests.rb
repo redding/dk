@@ -261,13 +261,16 @@ module Dk::Task
 
     should "run local cmds, calling to the runner" do
       runner_cmd_called_with = nil
-      Assert.stub(@runner, :cmd){ |*args| runner_cmd_called_with = args }
+      Assert.stub(@runner, :cmd) do |*args|
+        runner_cmd_called_with = args
+        Assert.stub_send(@runner, :cmd, *args)
+      end
 
       cmd_str   = Factory.string
       cmd_input = Factory.string
       cmd_opts  = { Factory.string => Factory.string }
-      subject.instance_eval{ cmd(cmd_str, cmd_input, cmd_opts) }
 
+      subject.instance_eval{ cmd(cmd_str, cmd_input, cmd_opts) }
       exp = [cmd_str, cmd_input, cmd_opts]
       assert_equal exp, runner_cmd_called_with
 
@@ -280,6 +283,22 @@ module Dk::Task
       assert_equal exp, runner_cmd_called_with
 
       subject.instance_eval{ cmd(cmd_str, cmd_opts) }
+      exp = [cmd_str, nil, cmd_opts]
+      assert_equal exp, runner_cmd_called_with
+
+      subject.instance_eval{ cmd!(cmd_str, cmd_input, cmd_opts) }
+      exp = [cmd_str, cmd_input, cmd_opts]
+      assert_equal exp, runner_cmd_called_with
+
+      subject.instance_eval{ cmd!(cmd_str) }
+      exp = [cmd_str, nil, {}]
+      assert_equal exp, runner_cmd_called_with
+
+      subject.instance_eval{ cmd!(cmd_str, cmd_input) }
+      exp = [cmd_str, cmd_input, {}]
+      assert_equal exp, runner_cmd_called_with
+
+      subject.instance_eval{ cmd!(cmd_str, cmd_opts) }
       exp = [cmd_str, nil, cmd_opts]
       assert_equal exp, runner_cmd_called_with
     end
@@ -314,7 +333,10 @@ module Dk::Task
 
     should "run ssh cmds, calling to the runner" do
       runner_ssh_called_with = nil
-      Assert.stub(@runner, :ssh){ |*args| runner_ssh_called_with = args }
+      Assert.stub(@runner, :ssh) do |*args|
+        runner_ssh_called_with = args
+        Assert.stub_send(@runner, :ssh, *args)
+      end
 
       cmd_str   = Factory.string
       cmd_input = Factory.string
@@ -324,16 +346,16 @@ module Dk::Task
         :ssh_args      => Factory.string,
         :host_ssh_args => { Factory.string => Factory.string }
       }
-      subject.instance_eval{ ssh(cmd_str, cmd_input, cmd_opts) }
-
-      exp = [cmd_str, cmd_input, cmd_opts]
-      assert_equal exp, runner_ssh_called_with
 
       default_ssh_cmd_opts =  {
         :ssh_args      => "",
         :host_ssh_args => {},
         :hosts         => [nil]
       }
+
+      subject.instance_eval{ ssh(cmd_str, cmd_input, cmd_opts) }
+      exp = [cmd_str, cmd_input, cmd_opts]
+      assert_equal exp, runner_ssh_called_with
 
       subject.instance_eval{ ssh(cmd_str) }
       exp = [cmd_str, nil, default_ssh_cmd_opts]
@@ -344,6 +366,22 @@ module Dk::Task
       assert_equal exp, runner_ssh_called_with
 
       subject.instance_eval{ ssh(cmd_str, cmd_opts) }
+      exp = [cmd_str, nil, cmd_opts]
+      assert_equal exp, runner_ssh_called_with
+
+      subject.instance_eval{ ssh!(cmd_str, cmd_input, cmd_opts) }
+      exp = [cmd_str, cmd_input, cmd_opts]
+      assert_equal exp, runner_ssh_called_with
+
+      subject.instance_eval{ ssh!(cmd_str) }
+      exp = [cmd_str, nil, default_ssh_cmd_opts]
+      assert_equal exp, runner_ssh_called_with
+
+      subject.instance_eval{ ssh!(cmd_str, cmd_input) }
+      exp = [cmd_str, cmd_input, default_ssh_cmd_opts]
+      assert_equal exp, runner_ssh_called_with
+
+      subject.instance_eval{ ssh!(cmd_str, cmd_opts) }
       exp = [cmd_str, nil, cmd_opts]
       assert_equal exp, runner_ssh_called_with
     end

@@ -64,7 +64,7 @@ module Dk
       end
 
       def cmd!(cmd_str, *args)
-        cmd = @dk_runner.cmd(cmd_str, *args)
+        cmd = cmd(cmd_str, *args)
         if !cmd.success?
           raise CmdRunError, "error running `#{cmd.cmd_str}`", caller
         end
