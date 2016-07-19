@@ -5,8 +5,9 @@ module Dk; end
 module Dk::Remote
 
   def self.ssh_cmd_str(cmd_str, host, args, host_args)
+    host_args = host_args[host.to_s] if !host.nil?
     val = "\"#{cmd_str.gsub(/\s+/, ' ')}\"".gsub("\\", "\\\\\\").gsub('"', '\"')
-    "ssh #{args} #{host_args[host.to_s]} #{host} -- \"sh -c #{val}\""
+    "ssh #{args} #{host_args} #{host} -- \"sh -c #{val}\""
   end
 
   class BaseCmd
