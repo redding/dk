@@ -19,7 +19,7 @@ module Dk::Task
     should have_imeths :before_callback_task_classes
     should have_imeths :after_callback_task_classes
     should have_imeths :before, :after, :prepend_before, :prepend_after
-    should have_imeths :ssh_hosts
+    should have_imeths :ssh_hosts, :run_only_once
 
     should "use much-plugin" do
       assert_includes MuchPlugin, Dk::Task
@@ -99,6 +99,18 @@ module Dk::Task
       subject.ssh_hosts{ hosts }
       assert_kind_of Proc, subject.ssh_hosts
       assert_equal hosts, subject.ssh_hosts.call
+    end
+
+    should "set whether it should run only once" do
+      assert_nil subject.run_only_once
+
+      value = [true, Factory.string, Factory.integer].sample
+      subject.run_only_once value
+      assert_true subject.run_only_once
+
+      value = false
+      subject.run_only_once value
+      assert_false subject.run_only_once
     end
 
   end
@@ -198,6 +210,32 @@ module Dk::Task
       assert_equal  9, @call_orders.first_after_call_order
       assert_equal 10, @call_orders.second_after_call_order
       assert_equal 11, @call_orders.runner_after_call_order
+    end
+
+  end
+
+  class RunOnlyOnceTests < RunTests
+    desc "with run only once set"
+    setup do
+      CallbacksTask.run_only_once false
+    end
+    teardown do
+      CallbacksTask.run_only_once false
+    end
+
+    should "run only once" do
+      @call_orders.reset
+      @runner.run(CallbacksTask)
+
+      # should run the task even though it has already been run by the runner
+      assert_equal 6, @call_orders.run_call_order
+
+      CallbacksTask.run_only_once true
+      @call_orders.reset
+      @runner.run(CallbacksTask)
+
+      # should not run the task since it has already been run by the runner
+      assert_nil @call_orders.run_call_order
     end
 
   end
@@ -663,6 +701,21 @@ module Dk::Task
 
     def run; @run_call_order = next_call_order; end
 
+    def reset
+      @first_before_call_order          = nil
+      @second_before_call_order         = nil
+      @prepend_before_call_order        = nil
+      @runner_prepend_before_call_order = nil
+      @runner_before_call_order         = nil
+      @first_after_call_order           = nil
+      @second_after_call_order          = nil
+      @prepend_after_call_order         = nil
+      @runner_prepend_after_call_order  = nil
+      @runner_after_call_order          = nil
+      @run_call_order                   = nil
+      @order                            = nil
+    end
+
     private
 
     def next_call_order
@@ -689,6 +742,8 @@ module Dk::Task
     after         CallbackTask, 'callback' => 'first_after'
     after         CallbackTask, 'callback' => 'second_after'
     prepend_after CallbackTask, 'callback' => 'prepend_after'
+
+    run_only_once false
 
     def run!
       params['call_orders'].run

@@ -44,6 +44,7 @@ class Dk::Runner
     should have_imeths :run, :run_task
     should have_imeths :log_info, :log_debug, :log_error
     should have_imeths :cmd, :ssh
+    should have_imeths :has_run_task?
 
     should "know its attrs" do
       assert_equal @args[:params], subject.params
@@ -134,6 +135,17 @@ class Dk::Runner
 
       subject.log_error msg
       assert_equal [msg], logger_error_called_with
+    end
+
+    should "know if it has run a task or not" do
+      assert_false subject.has_run_task?(TestTask)
+      subject.run(TestTask)
+      assert_true subject.has_run_task?(TestTask)
+
+      task_class = Class.new{ include Dk::Task; def run!; end }
+      assert_false subject.has_run_task?(task_class)
+      subject.run_task(task_class)
+      assert_true subject.has_run_task?(task_class)
     end
 
   end

@@ -23,7 +23,10 @@ module Dk
 
       def dk_run
         self.dk_run_callbacks 'before'
-        catch(:halt){ self.run! }
+        catch(:halt) do
+          halt if self.class.run_only_once && @dk_runner.has_run_task?(self.class)
+          self.run!
+        end
         self.dk_run_callbacks 'after'
       end
 
@@ -172,6 +175,11 @@ module Dk
       def ssh_hosts(value = nil, &block)
         @ssh_hosts = block || proc{ value } if !block.nil? || !value.nil?
         @ssh_hosts || proc{}
+      end
+
+      def run_only_once(value = nil)
+        @run_only_once = !!value if !value.nil?
+        @run_only_once
       end
 
     end
