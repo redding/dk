@@ -17,6 +17,7 @@ module Dk
 
     DEFAULT_INIT_PROCS       = [].freeze
     DEFAULT_PARAMS           = {}.freeze
+    DEFAULT_CALLBACKS        = Hash.new{ |h, k| h[k] = [] }.freeze
     DEFAULT_SSH_HOSTS        = {}.freeze
     DEFAULT_SSH_ARGS         = ''.freeze
     DEFAULT_HOST_SSH_ARGS    = Hash.new{ |h, k| h[k] = DEFAULT_SSH_ARGS }
@@ -27,18 +28,25 @@ module Dk
     STDOUT_LOG_LEVEL = 'info'.freeze
     FILE_LOG_LEVEL   = 'debug'.freeze
 
-    attr_reader :init_procs, :params, :tasks
+    attr_reader :init_procs, :params
+    attr_reader :before_callbacks, :prepend_before_callbacks
+    attr_reader :after_callbacks, :prepend_after_callbacks
+    attr_reader :tasks
 
     def initialize
-      @init_procs       = DEFAULT_INIT_PROCS.dup
-      @params           = DEFAULT_PARAMS.dup
-      @ssh_hosts        = DEFAULT_SSH_HOSTS.dup
-      @ssh_args         = DEFAULT_SSH_ARGS.dup
-      @host_ssh_args    = DEFAULT_HOST_SSH_ARGS.dup
-      @tasks            = DEFAULT_TASKS.dup
-      @log_pattern      = DEFAULT_LOG_PATTERN
-      @log_file         = nil
-      @log_file_pattern = DEFAULT_LOG_FILE_PATTERN
+      @init_procs               = DEFAULT_INIT_PROCS.dup
+      @params                   = DEFAULT_PARAMS.dup
+      @before_callbacks         = DEFAULT_CALLBACKS.dup
+      @prepend_before_callbacks = DEFAULT_CALLBACKS.dup
+      @after_callbacks          = DEFAULT_CALLBACKS.dup
+      @prepend_after_callbacks  = DEFAULT_CALLBACKS.dup
+      @ssh_hosts                = DEFAULT_SSH_HOSTS.dup
+      @ssh_args                 = DEFAULT_SSH_ARGS.dup
+      @host_ssh_args            = DEFAULT_HOST_SSH_ARGS.dup
+      @tasks                    = DEFAULT_TASKS.dup
+      @log_pattern              = DEFAULT_LOG_PATTERN
+      @log_file                 = nil
+      @log_file_pattern         = DEFAULT_LOG_FILE_PATTERN
     end
 
     def init
@@ -50,19 +58,47 @@ module Dk
     end
 
     def before(subject_task_class, callback_task_class, params = nil)
-      subject_task_class.before(callback_task_class, params)
-    end
-
-    def after(subject_task_class, callback_task_class, params = nil)
-      subject_task_class.after(callback_task_class, params)
+      self.before_callbacks[subject_task_class] << Task::Callback.new(
+        callback_task_class,
+        params
+      )
     end
 
     def prepend_before(subject_task_class, callback_task_class, params = nil)
-      subject_task_class.prepend_before(callback_task_class, params)
+      self.prepend_before_callbacks[subject_task_class].unshift(Task::Callback.new(
+        callback_task_class,
+        params
+      ))
+    end
+
+    def after(subject_task_class, callback_task_class, params = nil)
+      self.after_callbacks[subject_task_class] << Task::Callback.new(
+        callback_task_class,
+        params
+      )
     end
 
     def prepend_after(subject_task_class, callback_task_class, params = nil)
-      subject_task_class.prepend_after(callback_task_class, params)
+      self.prepend_after_callbacks[subject_task_class].unshift(Task::Callback.new(
+        callback_task_class,
+        params
+      ))
+    end
+
+    def before_callback_task_classes(for_task_class)
+      self.before_callbacks[for_task_class].map(&:task_class)
+    end
+
+    def prepend_before_callback_task_classes(for_task_class)
+      self.prepend_before_callbacks[for_task_class].map(&:task_class)
+    end
+
+    def after_callback_task_classes(for_task_class)
+      self.after_callbacks[for_task_class].map(&:task_class)
+    end
+
+    def prepend_after_callback_task_classes(for_task_class)
+      self.prepend_after_callbacks[for_task_class].map(&:task_class)
     end
 
     def task(name, task_class = nil)

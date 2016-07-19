@@ -26,6 +26,7 @@ class Dk::Config
     should "know its defaults" do
       assert_equal Array.new,          subject::DEFAULT_INIT_PROCS
       assert_equal Hash.new,           subject::DEFAULT_PARAMS
+      assert_equal Hash.new,           subject::DEFAULT_CALLBACKS
       assert_equal Hash.new,           subject::DEFAULT_SSH_HOSTS
       assert_equal '',                 subject::DEFAULT_SSH_ARGS
       assert_equal Hash.new,           subject::DEFAULT_HOST_SSH_ARGS
@@ -48,9 +49,16 @@ class Dk::Config
     end
     subject{ @config }
 
-    should have_readers :init_procs, :params, :tasks
+    should have_readers :init_procs, :params
+    should have_readers :before_callbacks, :prepend_before_callbacks
+    should have_readers :after_callbacks, :prepend_after_callbacks
+    should have_readers :tasks
     should have_imeths :init
-    should have_imeths :before, :after, :prepend_before, :prepend_after
+    should have_imeths :before, :prepend_before, :after, :prepend_after
+    should have_imeths :before_callback_task_classes
+    should have_imeths :prepend_before_callback_task_classes
+    should have_imeths :after_callback_task_classes
+    should have_imeths :prepend_after_callback_task_classes
     should have_imeths :task
     should have_imeths :log_pattern, :log_file, :log_file_pattern
     should have_imeths :dk_logger_stdout_output_name, :dk_logger_file_output_name
@@ -59,6 +67,10 @@ class Dk::Config
     should "default its attrs" do
       assert_equal @config_class::DEFAULT_INIT_PROCS,       subject.init_procs
       assert_equal @config_class::DEFAULT_PARAMS,           subject.params
+      assert_equal @config_class::DEFAULT_CALLBACKS,        subject.before_callbacks
+      assert_equal @config_class::DEFAULT_CALLBACKS,        subject.prepend_before_callbacks
+      assert_equal @config_class::DEFAULT_CALLBACKS,        subject.after_callbacks
+      assert_equal @config_class::DEFAULT_CALLBACKS,        subject.prepend_after_callbacks
       assert_equal @config_class::DEFAULT_SSH_HOSTS,        subject.ssh_hosts
       assert_equal @config_class::DEFAULT_SSH_ARGS,         subject.ssh_args
       assert_equal @config_class::DEFAULT_HOST_SSH_ARGS,    subject.host_ssh_args
@@ -78,35 +90,53 @@ class Dk::Config
     end
 
     should "append callback tasks to other tasks" do
-      subj_task_class = Class.new{ include Dk::Task }
-      cb_task_class   = Factory.string
-      cb_params       = Factory.string
+      subj_task_class  = Class.new{ include Dk::Task }
+      other_task_class = Factory.string
+      cb_task_class    = Factory.string
+      cb_params        = Factory.string
 
-      subj_task_class.before_callbacks << Factory.string
+      subject.before(subj_task_class, other_task_class)
       subject.before(subj_task_class, cb_task_class, cb_params)
-      assert_equal cb_task_class, subj_task_class.before_callbacks.last.task_class
-      assert_equal cb_params,     subj_task_class.before_callbacks.last.params
 
-      subj_task_class.after_callbacks << Factory.string
+      cb = subject.before_callbacks[subj_task_class].last
+      assert_equal cb_task_class, cb.task_class
+      assert_equal cb_params,     cb.params
+
+      subject.after(subj_task_class, other_task_class)
       subject.after(subj_task_class, cb_task_class, cb_params)
-      assert_equal cb_task_class, subj_task_class.after_callbacks.last.task_class
-      assert_equal cb_params,     subj_task_class.after_callbacks.last.params
+
+      cb = subject.after_callbacks[subj_task_class].last
+      assert_equal cb_task_class, cb.task_class
+      assert_equal cb_params,     cb.params
+
+      exp = [other_task_class, cb_task_class]
+      assert_equal exp, subject.before_callback_task_classes(subj_task_class)
+      assert_equal exp, subject.after_callback_task_classes(subj_task_class)
     end
 
     should "prepend callback tasks to other tasks" do
-      subj_task_class = Class.new{ include Dk::Task }
-      cb_task_class   = Factory.string
-      cb_params       = Factory.string
+      subj_task_class  = Class.new{ include Dk::Task }
+      other_task_class = Factory.string
+      cb_task_class    = Factory.string
+      cb_params        = Factory.string
 
-      subj_task_class.before_callbacks << Factory.string
+      subject.prepend_before(subj_task_class, other_task_class)
       subject.prepend_before(subj_task_class, cb_task_class, cb_params)
-      assert_equal cb_task_class, subj_task_class.before_callbacks.first.task_class
-      assert_equal cb_params,     subj_task_class.before_callbacks.first.params
 
-      subj_task_class.after_callbacks << Factory.string
+      cb = subject.prepend_before_callbacks[subj_task_class].first
+      assert_equal cb_task_class, cb.task_class
+      assert_equal cb_params,     cb.params
+
+      subject.prepend_after(subj_task_class, other_task_class)
       subject.prepend_after(subj_task_class, cb_task_class, cb_params)
-      assert_equal cb_task_class, subj_task_class.after_callbacks.first.task_class
-      assert_equal cb_params,     subj_task_class.after_callbacks.first.params
+
+      cb = subject.prepend_after_callbacks[subj_task_class].first
+      assert_equal cb_task_class, cb.task_class
+      assert_equal cb_params,     cb.params
+
+      exp = [other_task_class, cb_task_class].reverse
+      assert_equal exp, subject.prepend_before_callback_task_classes(subj_task_class)
+      assert_equal exp, subject.prepend_after_callback_task_classes(subj_task_class)
     end
 
     should "add callable tasks" do
