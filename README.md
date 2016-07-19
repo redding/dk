@@ -472,6 +472,25 @@ class MyTask
 end
 ```
 
+#### Ensure Tasks Only Run Once
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  run_only_once true
+
+  def run!
+    # ... do something ...
+  end
+
+end
+```
+
+Use this setting to ensure that a task only runs once no matter how many other tasks or sub-tasks either run it manually or configure it as a callback.  This is useful for "gatekeeper" tasks such as tasks that validate params, etc.  By default, tasks can run multiple times.
+
 #### Testing Tasks
 
 Dk comes with a test runner and some test helpers to assist in unit testing tasks.  The test runner doesn't run any callback tasks and captures spies for the task, cmd and ssh calls it runs.  It also turns off any logging.

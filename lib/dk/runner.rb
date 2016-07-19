@@ -1,3 +1,4 @@
+require 'set'
 require 'dk/config'
 require 'dk/has_set_param'
 require 'dk/has_ssh_opts'
@@ -31,6 +32,8 @@ module Dk
       @host_ssh_args = opts[:host_ssh_args] || Config::DEFAULT_HOST_SSH_ARGS.dup
 
       @logger = opts[:logger] || NullLogger.new
+
+      @has_run_task_classes = Set.new
     end
 
     def task_callbacks(named, task_class)
@@ -59,10 +62,17 @@ module Dk
       build_and_run_remote_cmd(cmd_str, opts)
     end
 
+    def has_run_task?(task_class)
+      @has_run_task_classes.include?(task_class)
+    end
+
     private
 
     def build_and_run_task(task_class, params = nil)
-      build_task(task_class, params).tap(&:dk_run)
+      build_task(task_class, params).tap do |task|
+        task.dk_run
+        @has_run_task_classes << task_class
+      end
     end
 
     def build_task(task_class, params = nil)
