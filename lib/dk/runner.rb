@@ -54,12 +54,12 @@ module Dk
     def log_debug(msg); self.logger.debug(msg); end # TODO: style up
     def log_error(msg); self.logger.error(msg); end # TODO: style up
 
-    def cmd(cmd_str, opts)
-      build_and_run_local_cmd(cmd_str, opts)
+    def cmd(cmd_str, input, opts)
+      build_and_run_local_cmd(cmd_str, input, opts)
     end
 
-    def ssh(cmd_str, opts)
-      build_and_run_remote_cmd(cmd_str, opts)
+    def ssh(cmd_str, input, opts)
+      build_and_run_remote_cmd(cmd_str, input, opts)
     end
 
     def has_run_task?(task_class)
@@ -79,8 +79,8 @@ module Dk
       task_class.new(self, params)
     end
 
-    def build_and_run_local_cmd(cmd_str, opts, &block)
-      log_local_cmd(build_local_cmd(cmd_str, opts)){ |cmd| cmd.run }
+    def build_and_run_local_cmd(cmd_str, input, opts)
+      log_local_cmd(build_local_cmd(cmd_str, opts)){ |cmd| cmd.run(input) }
     end
 
     def build_local_cmd(cmd_str, opts)
@@ -96,8 +96,8 @@ module Dk
       cmd
     end
 
-    def build_and_run_remote_cmd(cmd_str, opts, &block)
-      log_remote_cmd(build_remote_cmd(cmd_str, opts)){ |cmd| cmd.run }
+    def build_and_run_remote_cmd(cmd_str, input, opts)
+      log_remote_cmd(build_remote_cmd(cmd_str, opts)){ |cmd| cmd.run(input) }
     end
 
     def build_remote_cmd(cmd_str, opts)

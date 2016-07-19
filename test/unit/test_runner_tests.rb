@@ -87,23 +87,27 @@ class Dk::TestRunner
       assert_equal [],                      st.runs
 
       assert_same lc, subject.local_cmd
-      assert_equal subject.local_cmd_str,  lc.cmd_str
-      assert_equal subject.local_cmd_opts, lc.cmd_opts
+      assert_equal subject.local_cmd_str,   lc.cmd_str
+      assert_equal subject.local_cmd_opts,  lc.cmd_opts
+      assert_equal subject.local_cmd_input, lc.run_input
       assert_true lc.run_called?
 
       assert_same lcb, subject.local_cmd_bang
-      assert_equal subject.local_cmd_str,  lcb.cmd_str
-      assert_equal subject.local_cmd_opts, lcb.cmd_opts
+      assert_equal subject.local_cmd_str,   lcb.cmd_str
+      assert_equal subject.local_cmd_opts,  lcb.cmd_opts
+      assert_equal subject.local_cmd_input, lcb.run_input
       assert_true lcb.run_called?
 
       assert_same rc, subject.remote_cmd
-      assert_equal subject.remote_cmd_str,  rc.cmd_str
-      assert_equal subject.remote_cmd_opts, rc.cmd_opts
+      assert_equal subject.remote_cmd_str,   rc.cmd_str
+      assert_equal subject.remote_cmd_opts,  rc.cmd_opts
+      assert_equal subject.remote_cmd_input, rc.run_input
       assert_true rc.run_called?
 
       assert_same rcb, subject.remote_cmd_bang
-      assert_equal subject.remote_cmd_str,  rcb.cmd_str
-      assert_equal subject.remote_cmd_opts, rcb.cmd_opts
+      assert_equal subject.remote_cmd_str,   rcb.cmd_str
+      assert_equal subject.remote_cmd_opts,  rcb.cmd_opts
+      assert_equal subject.remote_cmd_input, rcb.run_input
       assert_true rcb.run_called?
     end
 
@@ -221,12 +225,20 @@ class Dk::TestRunner
       @local_cmd_str ||= Factory.string
     end
 
+    def local_cmd_input
+      @local_cmd_input ||= Factory.string
+    end
+
     def local_cmd_opts
       @local_cmd_opts ||= { Factory.string => Factory.string }
     end
 
     def remote_cmd_str
       @remote_cmd_str ||= Factory.string
+    end
+
+    def remote_cmd_input
+      @remote_cmd_input ||= Factory.string
     end
 
     def remote_cmd_opts
@@ -243,10 +255,10 @@ class Dk::TestRunner
       @run_params = params
 
       @sub_task        = run_task(SubTask, self.sub_task_params)
-      @local_cmd       = cmd(self.local_cmd_str, self.local_cmd_opts)
-      @local_cmd_bang  = cmd!(self.local_cmd_str, self.local_cmd_opts)
-      @remote_cmd      = ssh(self.remote_cmd_str, self.remote_cmd_opts)
-      @remote_cmd_bang = ssh!(self.remote_cmd_str, self.remote_cmd_opts)
+      @local_cmd       = cmd(self.local_cmd_str, self.local_cmd_input, self.local_cmd_opts)
+      @local_cmd_bang  = cmd!(self.local_cmd_str, self.local_cmd_input, self.local_cmd_opts)
+      @remote_cmd      = ssh(self.remote_cmd_str, self.remote_cmd_input, self.remote_cmd_opts)
+      @remote_cmd_bang = ssh!(self.remote_cmd_str, self.remote_cmd_input, self.remote_cmd_opts)
 
       @scmd_test_mode_run_value = ENV['SCMD_TEST_MODE']
     end

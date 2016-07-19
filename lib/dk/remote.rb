@@ -88,6 +88,11 @@ module Dk::Remote
       @first_local_cmd_spy = @local_cmds[@hosts.first]
     end
 
+    def run_input
+      return nil unless self.run_called?
+      self.run_calls.first.input
+    end
+
     # just set the first local cmd, this will have an overall effect
     def stdout=(value);     @first_local_cmd_spy.stdout     = value; end
     def stderr=(value);     @first_local_cmd_spy.stderr     = value; end

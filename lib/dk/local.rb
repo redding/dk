@@ -65,6 +65,11 @@ module Dk::Local
       @cmd_opts = opts
     end
 
+    def run_input
+      return nil unless self.run_called?
+      self.run_calls.first.input
+    end
+
     def stdout=(value);     @scmd.stdout     = value; end
     def stderr=(value);     @scmd.stderr     = value; end
     def exitstatus=(value); @scmd.exitstatus = value; end

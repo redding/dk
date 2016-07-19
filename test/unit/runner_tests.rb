@@ -153,6 +153,7 @@ class Dk::Runner
   class CmdSetupTests < UnitTests
     setup do
       @cmd_str   = Factory.string
+      @cmd_input = Factory.string
       @cmd_opts  = { Factory.string => Factory.string}
 
       @log_out = ""
@@ -182,13 +183,14 @@ class Dk::Runner
     end
 
     should "build, log and run local cmds" do
-      @runner.cmd(@cmd_str, @cmd_opts)
+      @runner.cmd(@cmd_str, @cmd_input, @cmd_opts)
 
       exp = [@cmd_str, @cmd_opts]
       assert_equal exp, @local_cmd_new_called_with
 
       assert_not_nil @local_cmd
       assert_true @local_cmd.run_called?
+      assert_equal @cmd_input, @local_cmd.run_input
 
       assert_equal exp_log_output(@local_cmd), @log_out
     end
@@ -221,13 +223,14 @@ class Dk::Runner
     end
 
     should "build, log and run remote cmds" do
-      @runner.ssh(@cmd_str, @cmd_opts)
+      @runner.ssh(@cmd_str, @cmd_input, @cmd_opts)
 
       exp = [@cmd_str, @cmd_opts]
       assert_equal exp, @remote_cmd_new_called_with
 
       assert_not_nil @remote_cmd
       assert_true @remote_cmd.run_called?
+      assert_equal @cmd_input, @remote_cmd.run_input
 
       assert_equal exp_log_output(@remote_cmd), @log_out
     end
