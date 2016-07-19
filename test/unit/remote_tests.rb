@@ -224,7 +224,7 @@ module Dk::Remote
     subject{ @cmd }
 
     should have_readers :cmd_opts
-    should have_imeths :stdout=, :stderr=, :exitstatus=
+    should have_imeths :run_input, :stdout=, :stderr=, :exitstatus=
     should have_imeths :run_calls, :run_called?
 
     should "build a local cmd spy for each host with the cmd str, given opts" do
@@ -256,6 +256,14 @@ module Dk::Remote
       )
       exp_opts = { :env => @opts[:env] }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_spy_new_called_with
+    end
+
+    should "know the input it was run with" do
+      input = Factory.string
+
+      assert_nil subject.run_input
+      subject.run(input)
+      assert_equal input, subject.run_input
     end
 
     should "demeter its first local cmd spy" do

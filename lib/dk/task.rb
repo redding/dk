@@ -57,24 +57,28 @@ module Dk
         @dk_runner.run_task(task_class, params)
       end
 
-      def cmd(cmd_str, opts = nil)
-        @dk_runner.cmd(cmd_str, opts)
+      def cmd(cmd_str, *args)
+        opts  = args.last.kind_of?(::Hash) ? args.pop : {}
+        input = args.last
+        @dk_runner.cmd(cmd_str, input, opts)
       end
 
-      def cmd!(cmd_str, opts = nil)
-        cmd = @dk_runner.cmd(cmd_str, opts)
+      def cmd!(cmd_str, *args)
+        cmd = @dk_runner.cmd(cmd_str, *args)
         if !cmd.success?
           raise CmdRunError, "error running `#{cmd.cmd_str}`", caller
         end
         cmd
       end
 
-      def ssh(cmd_str, opts = nil)
-        @dk_runner.ssh(cmd_str, dk_build_ssh_opts(opts))
+      def ssh(cmd_str, *args)
+        opts  = args.last.kind_of?(::Hash) ? args.pop : {}
+        input = args.last
+        @dk_runner.ssh(cmd_str, input, dk_build_ssh_opts(opts))
       end
 
-      def ssh!(cmd_str, opts = nil)
-        cmd = ssh(cmd_str, opts)
+      def ssh!(cmd_str, *args)
+        cmd = ssh(cmd_str, *args)
         if !cmd.success?
           raise SSHRunError, "error running `#{cmd.cmd_str}` over ssh", caller
         end

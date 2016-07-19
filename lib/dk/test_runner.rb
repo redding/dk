@@ -28,13 +28,13 @@ module Dk
     end
 
     # track that a local cmd was run
-    def cmd(cmd_str, opts)
-      super(cmd_str, opts).tap{ |c| self.runs << c }
+    def cmd(cmd_str, input, opts)
+      super(cmd_str, input, opts).tap{ |c| self.runs << c }
     end
 
     # track that a remote cmd was run
-    def ssh(cmd_str, opts)
-      super(cmd_str, opts).tap{ |c| self.runs << c }
+    def ssh(cmd_str, input, opts)
+      super(cmd_str, input, opts).tap{ |c| self.runs << c }
     end
 
     # test task API

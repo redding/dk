@@ -120,7 +120,7 @@ module Dk::Local
     end
 
     should have_readers :cmd_opts
-    should have_imeths :stdout=, :stderr=, :exitstatus=
+    should have_imeths :run_input, :stdout=, :stderr=, :exitstatus=
     should have_imeths :run_calls, :run_called?
 
     should "build an scmd spy with the cmd str and any given options" do
@@ -131,6 +131,14 @@ module Dk::Local
       cmd  = @cmd_class.new(@cmd_str, opts)
       assert_equal [@cmd_str, { :env => opts[:env] }], @scmd_spy_new_called_with
       assert_equal opts, cmd.cmd_opts
+    end
+
+    should "know the input it was run with" do
+      input = Factory.string
+
+      assert_nil subject.run_input
+      subject.run(input)
+      assert_equal input, subject.run_input
     end
 
     should "demeter its scmd spy" do
