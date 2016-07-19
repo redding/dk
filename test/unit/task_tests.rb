@@ -154,7 +154,27 @@ module Dk::Task
       # build a base runner and task manually so the callback tasks actually
       # run (b/c the test runner doesn't run callbacks)
       @runner = Dk::Runner.new({
-        :params => { 'call_orders' => @call_orders }
+        :params                   => { 'call_orders' => @call_orders },
+        :before_callbacks         => {
+          CallbacksTask => [
+            Callback.new(CallbackTask, 'callback' => 'runner_before')
+          ]
+        },
+        :prepend_before_callbacks => {
+          CallbacksTask => [
+            Callback.new(CallbackTask, 'callback' => 'runner_prepend_before')
+          ]
+        },
+        :after_callbacks          => {
+          CallbacksTask => [
+            Callback.new(CallbackTask, 'callback' => 'runner_after')
+          ]
+        },
+        :prepend_after_callbacks  => {
+          CallbacksTask => [
+            Callback.new(CallbackTask, 'callback' => 'runner_prepend_after')
+          ]
+        }
       })
 
       # use this CallbacksTask that has a bunch of callbacks configured so we
@@ -167,13 +187,17 @@ module Dk::Task
     end
 
     should "call `run!` and run any callback tasks" do
-      assert_equal 1,  @call_orders.prepend_before_call_order
-      assert_equal 2,  @call_orders.first_before_call_order
-      assert_equal 3,  @call_orders.second_before_call_order
-      assert_equal 4,  @call_orders.run_call_order
-      assert_equal 5,  @call_orders.prepend_after_call_order
-      assert_equal 6,  @call_orders.first_after_call_order
-      assert_equal 7,  @call_orders.second_after_call_order
+      assert_equal  1, @call_orders.runner_prepend_before_call_order
+      assert_equal  2, @call_orders.prepend_before_call_order
+      assert_equal  3, @call_orders.first_before_call_order
+      assert_equal  4, @call_orders.second_before_call_order
+      assert_equal  5, @call_orders.runner_before_call_order
+      assert_equal  6, @call_orders.run_call_order
+      assert_equal  7, @call_orders.runner_prepend_after_call_order
+      assert_equal  8, @call_orders.prepend_after_call_order
+      assert_equal  9, @call_orders.first_after_call_order
+      assert_equal 10, @call_orders.second_after_call_order
+      assert_equal 11, @call_orders.runner_after_call_order
     end
 
   end
@@ -618,16 +642,24 @@ module Dk::Task
   class CallOrders
     attr_reader :first_before_call_order, :second_before_call_order
     attr_reader :prepend_before_call_order
+    attr_reader :runner_prepend_before_call_order
+    attr_reader :runner_before_call_order
     attr_reader :first_after_call_order, :second_after_call_order
     attr_reader :prepend_after_call_order
+    attr_reader :runner_prepend_after_call_order
+    attr_reader :runner_after_call_order
     attr_reader :run_call_order
 
-    def first_before;   @first_before_call_order   = next_call_order; end
-    def second_before;  @second_before_call_order  = next_call_order; end
-    def prepend_before; @prepend_before_call_order = next_call_order; end
-    def first_after;    @first_after_call_order    = next_call_order; end
-    def second_after;   @second_after_call_order   = next_call_order; end
-    def prepend_after;  @prepend_after_call_order  = next_call_order; end
+    def first_before;          @first_before_call_order          = next_call_order; end
+    def second_before;         @second_before_call_order         = next_call_order; end
+    def prepend_before;        @prepend_before_call_order        = next_call_order; end
+    def runner_prepend_before; @runner_prepend_before_call_order = next_call_order; end
+    def runner_before;         @runner_before_call_order         = next_call_order; end
+    def first_after;           @first_after_call_order           = next_call_order; end
+    def second_after;          @second_after_call_order          = next_call_order; end
+    def prepend_after;         @prepend_after_call_order         = next_call_order; end
+    def runner_prepend_after;  @runner_prepend_after_call_order  = next_call_order; end
+    def runner_after;          @runner_after_call_order          = next_call_order; end
 
     def run; @run_call_order = next_call_order; end
 

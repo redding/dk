@@ -18,11 +18,23 @@ module Dk
       @params = Hash.new{ |h, k| raise ArgumentError, "no param named `#{k}`" }
       @params.merge!(dk_normalize_params(opts[:params]))
 
+      d = Config::DEFAULT_CALLBACKS
+      @task_callbacks = {
+        'before'         => opts[:before_callbacks]         || d.dup,
+        'prepend_before' => opts[:prepend_before_callbacks] || d.dup,
+        'after'          => opts[:after_callbacks]          || d.dup,
+        'prepend_after'  => opts[:prepend_after_callbacks]  || d.dup
+      }
+
       @ssh_hosts     = opts[:ssh_hosts]     || Config::DEFAULT_SSH_HOSTS.dup
       @ssh_args      = opts[:ssh_args]      || Config::DEFAULT_SSH_ARGS.dup
       @host_ssh_args = opts[:host_ssh_args] || Config::DEFAULT_HOST_SSH_ARGS.dup
 
       @logger = opts[:logger] || NullLogger.new
+    end
+
+    def task_callbacks(named, task_class)
+      @task_callbacks[named][task_class] || []
     end
 
     # called by CLI on top-level tasks

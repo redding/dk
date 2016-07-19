@@ -40,6 +40,7 @@ class Dk::Runner
     subject{ @runner }
 
     should have_readers :params, :logger
+    should have_imeths :task_callbacks
     should have_imeths :run, :run_task
     should have_imeths :log_info, :log_debug, :log_error
     should have_imeths :cmd, :ssh
@@ -52,7 +53,13 @@ class Dk::Runner
     should "default its attrs" do
       runner = @runner_class.new
 
-      assert_equal Hash.new,                          runner.params
+      assert_equal Hash.new, runner.params
+
+      assert_equal [], runner.task_callbacks('before',         Factory.string)
+      assert_equal [], runner.task_callbacks('prepend_before', Factory.string)
+      assert_equal [], runner.task_callbacks('after',          Factory.string)
+      assert_equal [], runner.task_callbacks('prepend_after',  Factory.string)
+
       assert_equal Dk::Config::DEFAULT_SSH_HOSTS,     runner.ssh_hosts
       assert_equal Dk::Config::DEFAULT_SSH_ARGS,      runner.ssh_args
       assert_equal Dk::Config::DEFAULT_HOST_SSH_ARGS, runner.host_ssh_args
@@ -75,6 +82,16 @@ class Dk::Runner
 
       exp = { key.to_s => [{ key.to_s => value }] }
       assert_equal exp, runner.params
+    end
+
+    should "lookup any given task callbacks by name and task class" do
+      name = ['before', 'prepend_before', 'after', 'prepend_after'].sample
+
+      task_class = Factory.string
+      callbacks  = Factory.integer(3).times.map{ Dk::Task::Callback.new(Factory.string) }
+      runner = @runner_class.new("#{name}_callbacks".to_sym => { task_class => callbacks })
+
+      assert_equal callbacks, runner.task_callbacks(name, task_class)
     end
 
     should "build and run a given task class" do

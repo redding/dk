@@ -32,9 +32,10 @@ module Dk
       end
 
       def dk_run_callbacks(named)
-        (self.class.send("#{named}_callbacks") || []).each do |callback|
-          run_task(callback.task_class, callback.params)
-        end
+        callbacks  = @dk_runner.task_callbacks("prepend_#{named}", self.class)
+        callbacks += (self.class.send("#{named}_callbacks") || [])
+        callbacks += @dk_runner.task_callbacks(named, self.class)
+        callbacks.each{ |c| run_task(c.task_class, c.params) }
       end
 
       def dk_dsl_ssh_hosts
@@ -149,8 +150,8 @@ module Dk
       def before_callbacks; @before_callbacks ||= []; end
       def after_callbacks;  @after_callbacks  ||= []; end
 
-      def before_callback_task_classes; self.before_callbacks.map(&:task_class) end
-      def after_callback_task_classes;  self.after_callbacks.map(&:task_class)  end
+      def before_callback_task_classes; self.before_callbacks.map(&:task_class); end
+      def after_callback_task_classes;  self.after_callbacks.map(&:task_class);  end
 
       def before(task_class, params = nil)
         self.before_callbacks << Callback.new(task_class, params)
