@@ -89,6 +89,10 @@ module Dk
         @dk_runner.set_param(key, value)
       end
 
+      def param?(key)
+        @dk_params.key?(key) || @dk_runner.params.key?(key)
+      end
+
       def ssh_hosts(group_name = nil, *values)
         @dk_runner.ssh_hosts(group_name, *values)
       end

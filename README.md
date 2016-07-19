@@ -226,7 +226,7 @@ Use the `task` method to configure tasks that are runnable via the CLI.  This al
 
 The `Dk::Task` mixin provides a bunch of helper methods to make writing tasks easier and for commonizing common functions.
 
-##### `params`, `set_param`
+##### `params`, `set_param`, `param?`
 
 ```ruby
 require 'dk/task'
@@ -236,9 +236,12 @@ class MyTask
 
   def run!
     params['some_param'] #=> "some value"
+    param?('some_param') #=> true
 
+    param?('some_other_param') #=> false
     set_param('some_other_param', 'some other value')
     params['some_other_param'] #=> "some other value"
+    param?('some_other_param') #=> true
   end
 
 end
@@ -247,6 +250,8 @@ end
 Use the `param` helper to access named params that the task was run with.  Params can be added two ways: globally [from the main config](https://github.com/redding/dk#set_param) or from [callback definitions](https://github.com/redding/dk#task-callbacks) and [`run_task` calls](https://github.com/redding/dk#run_task).
 
 Use the `set_param` method to set new global param values like you would on the main config.  Any subsequent tasks that are run will have these param values available to them.
+
+Use the `param?` method to check whether a specific param has been set.  Prefer this over `params.key?` as the task params have special logic for interacting with any runner params that makes the traditional `key?` method unreliable.
 
 ##### `ssh_hosts`
 
