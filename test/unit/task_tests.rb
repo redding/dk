@@ -558,6 +558,18 @@ module Dk::Task
       assert_equal val, @runner.params[p]
     end
 
+    should "know if either a task or runner param is set" do
+      task_w_params = @task_class.new(@runner, @task_params)
+
+      p = @runner.params.keys.first
+      assert_true task_w_params.instance_eval{ param?(p) }
+
+      p = @task_params.keys.first
+      assert_true task_w_params.instance_eval{ param?(p) }
+
+      assert_false task_w_params.instance_eval{ param?(Factory.string) }
+    end
+
   end
 
   class SSHHostsPrivateHelpersTests < InitTests
