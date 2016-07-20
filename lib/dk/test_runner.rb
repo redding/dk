@@ -28,13 +28,13 @@ module Dk
     end
 
     # track that a local cmd was run
-    def cmd(cmd_str, input, opts)
-      super(cmd_str, input, opts).tap{ |c| self.runs << c }
+    def cmd(cmd_str, input, given_opts)
+      super(cmd_str, input, given_opts).tap{ |c| self.runs << c }
     end
 
     # track that a remote cmd was run
-    def ssh(cmd_str, input, opts)
-      super(cmd_str, input, opts).tap{ |c| self.runs << c }
+    def ssh(cmd_str, input, given_opts, ssh_opts)
+      super(cmd_str, input, given_opts, ssh_opts).tap{ |c| self.runs << c }
     end
 
     # test task API
@@ -45,54 +45,89 @@ module Dk
 
     # cmd stub API
 
-    def stub_cmd(cmd_str, opts = nil, &block)
-      build_local_cmd(cmd_str, opts).tap{ |spy| block.call(spy) }
+    def stub_cmd(cmd_str, *args, &block)
+      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+      input      = args.last
+      local_cmd_spy_blocks[cmd_spy_key(cmd_str, input, given_opts)] = block
     end
 
-    def unstub_cmd(cmd_str, opts = nil)
-      local_cmd_spies.delete(cmd_spy_key(cmd_str, opts))
+    def unstub_cmd(cmd_str, *args)
+      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+      input      = args.last
+
+      key = cmd_spy_key(cmd_str, input, given_opts)
+      local_cmd_spy_blocks.delete(key)
+      local_cmd_spies.delete(key)
     end
 
     def unstub_all_cmds
+      local_cmd_spy_blocks.clear
       local_cmd_spies.clear
     end
 
     # ssh stub API
 
-    def stub_ssh(cmd_str, opts = nil, &block)
-      build_remote_cmd(cmd_str, opts).tap{ |spy| block.call(spy) }
+    def stub_ssh(cmd_str, *args, &block)
+      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+      input      = args.last
+      remote_cmd_spy_blocks[cmd_spy_key(cmd_str, input, given_opts)] = block
     end
 
-    def unstub_ssh(cmd_str, opts = nil)
-      remote_cmd_spies.delete(cmd_spy_key(cmd_str, opts))
+    def unstub_ssh(cmd_str, *args)
+      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+      input      = args.last
+
+      key = cmd_spy_key(cmd_str, input, given_opts)
+      remote_cmd_spy_blocks.delete(key)
+      remote_cmd_spies.delete(key)
     end
 
     def unstub_all_ssh
+      remote_cmd_spy_blocks.clear
       remote_cmd_spies.clear
     end
 
     private
 
     # don't run any local cmds, always return spies that act like local cmds
-    def build_local_cmd(cmd_str, opts)
-      local_cmd_spies[cmd_spy_key(cmd_str, opts)]
+    def build_local_cmd(cmd_str, input, given_opts)
+      key = cmd_spy_key(cmd_str, input, given_opts)
+      local_cmd_spies[key] ||= begin
+        block = local_cmd_spy_blocks[key] || Proc.new{ |spy| }
+        Local::CmdSpy.new(cmd_str, given_opts).tap(&block)
+      end
     end
 
     def local_cmd_spies
-      @local_cmd_spies ||= Hash.new{ |h, k| h[k] = Local::CmdSpy.new(*k) }
+      @local_cmd_spies ||= {}
     end
 
-    # don't run any remote cmds, always return spies that act like remote cmds
-    def build_remote_cmd(cmd_str, opts)
-      remote_cmd_spies[cmd_spy_key(cmd_str, opts)]
+    def local_cmd_spy_blocks
+      @local_cmd_spy_blocks ||= {}
+    end
+
+    # don't run any remote cmds, always return spies that act like remote cmds;
+    # lookup cmd spies using the given opts but build them using the ssh opts,
+    # this allows stubbing and calling ssh cmds with the same opts but also
+    # allows building a valid remote cmd that has an ssh host
+    def build_remote_cmd(cmd_str, input, given_opts, ssh_opts)
+      key = cmd_spy_key(cmd_str, input, given_opts)
+      remote_cmd_spies[key] ||= begin
+        block = remote_cmd_spy_blocks[key] || Proc.new{ |spy| }
+        Remote::CmdSpy.new(cmd_str, ssh_opts).tap(&block)
+      end
     end
 
     def remote_cmd_spies
-      @remote_cmd_spies ||= Hash.new{ |h, k| h[k] = Remote::CmdSpy.new(*k) }
+      @remote_cmd_spies ||= {}
     end
 
-    def cmd_spy_key(cmd_str, opts = nil)
-      [cmd_str, opts]
+    def remote_cmd_spy_blocks
+      @remote_cmd_spy_blocks ||= {}
+    end
+
+    def cmd_spy_key(cmd_str, input, given_opts)
+      [cmd_str, input, given_opts]
     end
 
   end
