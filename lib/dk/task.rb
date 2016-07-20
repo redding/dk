@@ -58,9 +58,9 @@ module Dk
       end
 
       def cmd(cmd_str, *args)
-        opts  = args.last.kind_of?(::Hash) ? args.pop : {}
-        input = args.last
-        @dk_runner.cmd(cmd_str, input, opts)
+        given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+        input      = args.last
+        @dk_runner.cmd(cmd_str, input, given_opts)
       end
 
       def cmd!(cmd_str, *args)
@@ -72,9 +72,9 @@ module Dk
       end
 
       def ssh(cmd_str, *args)
-        opts  = args.last.kind_of?(::Hash) ? args.pop : {}
-        input = args.last
-        @dk_runner.ssh(cmd_str, input, dk_build_ssh_opts(opts))
+        given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+        input      = args.last
+        @dk_runner.ssh(cmd_str, input, given_opts, dk_build_ssh_opts(given_opts))
       end
 
       def ssh!(cmd_str, *args)

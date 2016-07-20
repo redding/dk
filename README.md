@@ -508,12 +508,35 @@ include Dk::Task::TestHelpers
 test "my task should do something" do
   runner = test_runner(MyTask)
   runner.run
-  runner.runs #=> [TaskRun, Local::CmdSpy, Remote::CmdSpey, ... ]
+  runner.runs #=> [TaskRun, Local::CmdSpy, Remote::CmdSpy, ... ]
 
   # make assertions that the logic you expect to run actually ran
   task = runner.task #=> MyTask instance
 
   # make assertions about your task instance if needed
+end
+```
+
+Dk's test helpers include methods for stubbing cmd and ssh calls.  This allows controlling cmd/ssh behavior such as exit status, stdout and stderr.  If a task expects to use the stdout/stderr or does special handling when a call errors then the stubbing methods can be used for testing.
+
+```ruby
+# in your test file or whatever
+
+include Dk::Task::TestHelpers
+
+test "my task should do something" do
+  runner = test_runner(MyTask)
+  runner.stub_cmd("ls -la") do |spy| # spy is a Local::CmdSpy
+    spy.stdout = "..."
+  end
+  runner.stub_ssh("ls -la") do |spy| # spy is a Remote::CmdSpy
+    spy.exitstatus = 1 # simulare the ssh call failing
+  end
+
+  runner.run
+
+  # make assertions about how your task used the stdout of the
+  # cmd and handled the ssh call that failed
 end
 ```
 

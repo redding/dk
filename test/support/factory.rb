@@ -3,6 +3,20 @@ require 'assert/factory'
 module Factory
   extend Assert::Factory
 
+  def self.ssh_cmd_opts
+    cmd_opts = { Factory.string => Factory.string }
+    # optionally have these options, this will ensure the default ssh cmd opts
+    # are used if these aren't provided
+    if Factory.boolean
+      cmd_opts.merge!({
+        :hosts         => Factory.hosts,
+        :ssh_args      => Factory.string,
+        :host_ssh_args => { Factory.string => Factory.string }
+      })
+    end
+    cmd_opts
+  end
+
   def self.stdout
     Factory.integer(3).times.map{ Factory.string }.join("\n")
   end

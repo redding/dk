@@ -152,9 +152,9 @@ class Dk::Runner
 
   class CmdSetupTests < UnitTests
     setup do
-      @cmd_str   = Factory.string
-      @cmd_input = Factory.string
-      @cmd_opts  = { Factory.string => Factory.string}
+      @cmd_str        = Factory.string
+      @cmd_input      = Factory.string
+      @cmd_given_opts = { Factory.string => Factory.string }
 
       @log_out = ""
       logger = Logger.new(StringIO.new(@log_out))
@@ -183,9 +183,9 @@ class Dk::Runner
     end
 
     should "build, log and run local cmds" do
-      @runner.cmd(@cmd_str, @cmd_input, @cmd_opts)
+      @runner.cmd(@cmd_str, @cmd_input, @cmd_given_opts)
 
-      exp = [@cmd_str, @cmd_opts]
+      exp = [@cmd_str, @cmd_given_opts]
       assert_equal exp, @local_cmd_new_called_with
 
       assert_not_nil @local_cmd
@@ -208,7 +208,7 @@ class Dk::Runner
   class SSHCmdTests < CmdSetupTests
     desc "running ssh cmds"
     setup do
-      @cmd_opts.merge!(:hosts => Factory.hosts)
+      @cmd_ssh_opts = { :hosts => Factory.hosts }
 
       @remote_cmd = nil
       @remote_cmd_new_called_with = nil
@@ -223,9 +223,9 @@ class Dk::Runner
     end
 
     should "build, log and run remote cmds" do
-      @runner.ssh(@cmd_str, @cmd_input, @cmd_opts)
+      @runner.ssh(@cmd_str, @cmd_input, @cmd_given_opts, @cmd_ssh_opts)
 
-      exp = [@cmd_str, @cmd_opts]
+      exp = [@cmd_str, @cmd_ssh_opts]
       assert_equal exp, @remote_cmd_new_called_with
 
       assert_not_nil @remote_cmd

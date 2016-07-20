@@ -119,32 +119,48 @@ class Dk::TestRunner
 
   end
 
-  class CmdStubTests < InitTests
+  class StubSetupTests < InitTests
     setup do
+      @runner.task_class = StubTestTask
       @task = @runner.task
 
-      cmd_spy = nil
-      stdout  = Factory.stdout
-      @runner.stub_cmd(@task.local_cmd_str, @task.local_cmd_opts) do |spy|
-        spy.stdout = stdout
-        cmd_spy    = spy
+      @cmd_spy           = nil
+      @with_opts_cmd_spy = nil
+    end
+
+  end
+
+  class CmdStubTests < StubSetupTests
+    setup do
+      @stdout = Factory.stdout
+
+      @runner.stub_cmd(@task.local_cmd_str) do |spy|
+        spy.stdout = @stdout
+        @cmd_spy   = spy
       end
 
-      @cmd_spy = cmd_spy
-      @stdout  = stdout
+      @runner.stub_cmd(@task.local_cmd_str, @task.local_cmd_opts) do |spy|
+        spy.stdout         = @stdout
+        @with_opts_cmd_spy = spy
+      end
     end
     subject{ @task }
 
     should "stub custom cmd spies" do
       @runner.run
 
-      assert_same @cmd_spy, subject.local_cmd
-      assert_same @cmd_spy, subject.local_cmd_bang
+      assert_same @cmd_spy,           subject.local_cmd
+      assert_same @cmd_spy,           subject.local_cmd_bang
+      assert_same @with_opts_cmd_spy, subject.local_cmd_with_opts
+      assert_same @with_opts_cmd_spy, subject.local_cmd_bang_with_opts
 
       assert_true @cmd_spy.run_called?
+      assert_true @with_opts_cmd_spy.run_called?
 
       assert_equal @stdout, subject.local_cmd.stdout
       assert_equal @stdout, subject.local_cmd_bang.stdout
+      assert_equal @stdout, subject.local_cmd_with_opts.stdout
+      assert_equal @stdout, subject.local_cmd_bang_with_opts.stdout
     end
 
     should "unstub specific cmd spies" do
@@ -152,8 +168,10 @@ class Dk::TestRunner
 
       @runner.run
 
-      assert_not_same @cmd_spy, subject.local_cmd
-      assert_not_same @cmd_spy, subject.local_cmd_bang
+      assert_same @cmd_spy, subject.local_cmd
+      assert_same @cmd_spy, subject.local_cmd_bang
+      assert_not_same @with_opts_cmd_spy, subject.local_cmd_with_opts
+      assert_not_same @with_opts_cmd_spy, subject.local_cmd_bang_with_opts
     end
 
     should "unstub all cmd spies" do
@@ -161,31 +179,36 @@ class Dk::TestRunner
 
       @runner.run
 
-      assert_not_same @cmd_spy, subject.local_cmd
-      assert_not_same @cmd_spy, subject.local_cmd_bang
+      assert_not_same @cmd_spy,           subject.local_cmd
+      assert_not_same @cmd_spy,           subject.local_cmd_bang
+      assert_not_same @with_opts_cmd_spy, subject.local_cmd_with_opts
+      assert_not_same @with_opts_cmd_spy, subject.local_cmd_bang_with_opts
     end
 
   end
 
-  class SSHStubTests < InitTests
+  class SSHStubTests < StubSetupTests
     setup do
-      @task = @runner.task
-
-      cmd_spy = nil
-      @runner.stub_ssh(@task.remote_cmd_str, @task.remote_cmd_opts) do |spy|
-        cmd_spy = spy
+      @runner.stub_ssh(@task.remote_cmd_str) do |spy|
+        @cmd_spy = spy
       end
-      @cmd_spy = cmd_spy
+
+      @runner.stub_ssh(@task.remote_cmd_str, @task.remote_cmd_opts) do |spy|
+        @with_opts_cmd_spy = spy
+      end
     end
     subject{ @task }
 
     should "stub custom ssh cmd spies" do
       @runner.run
 
-      assert_same @cmd_spy, subject.remote_cmd
-      assert_same @cmd_spy, subject.remote_cmd_bang
+      assert_same @cmd_spy,           subject.remote_cmd
+      assert_same @cmd_spy,           subject.remote_cmd_bang
+      assert_same @with_opts_cmd_spy, subject.remote_cmd_with_opts
+      assert_same @with_opts_cmd_spy, subject.remote_cmd_bang_with_opts
 
       assert_true @cmd_spy.run_called?
+      assert_true @with_opts_cmd_spy.run_called?
     end
 
     should "unstub specific ssh cmd spies" do
@@ -193,8 +216,10 @@ class Dk::TestRunner
 
       @runner.run
 
-      assert_not_same @cmd_spy, subject.remote_cmd
-      assert_not_same @cmd_spy, subject.remote_cmd_bang
+      assert_same @cmd_spy, subject.remote_cmd
+      assert_same @cmd_spy, subject.remote_cmd_bang
+      assert_not_same @with_opts_cmd_spy, subject.remote_cmd_with_opts
+      assert_not_same @with_opts_cmd_spy, subject.remote_cmd_bang_with_opts
     end
 
     should "unstub all ssh cmd spies" do
@@ -202,24 +227,15 @@ class Dk::TestRunner
 
       @runner.run
 
-      assert_not_same @cmd_spy, subject.remote_cmd
-      assert_not_same @cmd_spy, subject.remote_cmd_bang
+      assert_not_same @cmd_spy,           subject.remote_cmd
+      assert_not_same @cmd_spy,           subject.remote_cmd_bang
+      assert_not_same @with_opts_cmd_spy, subject.remote_cmd_with_opts
+      assert_not_same @with_opts_cmd_spy, subject.remote_cmd_bang_with_opts
     end
 
   end
 
-  class TestTask
-    include Dk::Task
-
-    attr_reader :run_called, :run_params
-    attr_reader :sub_task
-    attr_reader :local_cmd, :local_cmd_bang
-    attr_reader :remote_cmd, :remote_cmd_bang
-    attr_reader :scmd_test_mode_run_value
-
-    def sub_task_params
-      @sub_task_params ||= { Factory.string => Factory.string }
-    end
+  module TaskCmdMethods
 
     def local_cmd_str
       @local_cmd_str ||= Factory.string
@@ -248,6 +264,22 @@ class Dk::TestRunner
         :ssh_args      => Factory.string,
         :host_ssh_args => { Factory.string => Factory.string }
       }
+    end
+
+  end
+
+  class TestTask
+    include Dk::Task
+    include TaskCmdMethods
+
+    attr_reader :run_called, :run_params
+    attr_reader :sub_task
+    attr_reader :local_cmd, :local_cmd_bang
+    attr_reader :remote_cmd, :remote_cmd_bang
+    attr_reader :scmd_test_mode_run_value
+
+    def sub_task_params
+      @sub_task_params ||= { Factory.string => Factory.string }
     end
 
     def run!
@@ -281,6 +313,46 @@ class Dk::TestRunner
       def run!
         # no-op
       end
+    end
+
+  end
+
+  class StubTestTask
+    include Dk::Task
+    include TaskCmdMethods
+
+    attr_reader :local_cmd, :local_cmd_bang
+    attr_reader :local_cmd_with_opts, :local_cmd_bang_with_opts
+    attr_reader :remote_cmd, :remote_cmd_bang
+    attr_reader :remote_cmd_with_opts, :remote_cmd_bang_with_opts
+
+    ssh_hosts 'test'
+
+    def run!
+      # randomly pass cmd input, this shouldn't effect stubs
+      local_cmd_args = if false
+        [self.local_cmd_str, self.local_cmd_input]
+      else
+        [self.local_cmd_str]
+      end
+      local_cmd_with_opts_args = local_cmd_args + [self.local_cmd_opts]
+
+      remote_cmd_args = if false
+        [self.remote_cmd_str, self.remote_cmd_input]
+      else
+        [self.remote_cmd_str]
+      end
+      remote_cmd_with_opts_args = remote_cmd_args + [self.remote_cmd_opts]
+
+      @local_cmd                = cmd(*local_cmd_args)
+      @local_cmd_bang           = cmd!(*local_cmd_args)
+      @local_cmd_with_opts      = cmd(*local_cmd_with_opts_args)
+      @local_cmd_bang_with_opts = cmd!(*local_cmd_with_opts_args)
+
+      @remote_cmd                = ssh(*remote_cmd_args)
+      @remote_cmd_bang           = ssh!(*remote_cmd_args)
+      @remote_cmd_with_opts      = ssh(*remote_cmd_with_opts_args)
+      @remote_cmd_bang_with_opts = ssh!(*remote_cmd_with_opts_args)
     end
 
   end
