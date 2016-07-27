@@ -97,6 +97,22 @@ module Dk
         @dk_params.key?(key) || @dk_runner.params.key?(key)
       end
 
+      def before(subject, callback, params = nil)
+        @dk_runner.add_task_callback('before', subject, callback, params)
+      end
+
+      def prepend_before(subject, callback, params = nil)
+        @dk_runner.add_task_callback('prepend_before', subject, callback, params)
+      end
+
+      def after(subject, callback, params = nil)
+        @dk_runner.add_task_callback('after', subject, callback, params)
+      end
+
+      def prepend_after(subject, callback, params = nil)
+        @dk_runner.add_task_callback('prepend_after', subject, callback, params)
+      end
+
       def ssh_hosts(group_name = nil, *values)
         @dk_runner.ssh_hosts(group_name, *values)
       end

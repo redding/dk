@@ -40,7 +40,8 @@ class Dk::Runner
     subject{ @runner }
 
     should have_readers :params, :logger
-    should have_imeths :task_callbacks
+    should have_imeths :task_callbacks, :task_callback_task_classes
+    should have_imeths :add_task_callback
     should have_imeths :run, :run_task
     should have_imeths :log_info, :log_debug, :log_error
     should have_imeths :cmd, :ssh
@@ -93,6 +94,24 @@ class Dk::Runner
       runner = @runner_class.new("#{name}_callbacks".to_sym => { task_class => callbacks })
 
       assert_equal callbacks, runner.task_callbacks(name, task_class)
+
+      exp = callbacks.map(&:task_class)
+      assert_equal exp, runner.task_callback_task_classes(name, task_class)
+    end
+
+    should "add task callbacks by name and task class" do
+      name = ['before', 'prepend_before', 'after', 'prepend_after'].sample
+
+      subject         = Factory.string
+      callback        = Factory.string
+      callback_params = { Factory.string => Factory.string }
+
+      runner = @runner_class.new
+      runner.add_task_callback(name, subject, callback, callback_params)
+
+      exp = [Dk::Task::Callback.new(callback, callback_params)]
+      assert_equal exp,        runner.task_callbacks(name, subject)
+      assert_equal [callback], runner.task_callback_task_classes(name, subject)
     end
 
     should "build and run a given task class" do

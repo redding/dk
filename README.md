@@ -135,7 +135,7 @@ Dk.configure do
 end
 ```
 
-Each callback can be optionally configured with a set of params.  This can be especially useful when you want to control the order 3rd-party tasks are run in.
+Each callback can be optionally configured with a set of params.  Callbacks can either be appended or prepended (this can be especially useful when you want to control the order 3rd-party tasks are run in).
 
 The callback tasks will be run in the order they are added before/after the `run!` method of the task they are added to.  The [`halt` task helper](https://github.com/redding/dk#halt) does not stop these callbacks from running.
 
@@ -252,6 +252,28 @@ Use the `param` helper to access named params that the task was run with.  Param
 Use the `set_param` method to set new global param values like you would on the main config.  Any subsequent tasks that are run will have these param values available to them.
 
 Use the `param?` method to check whether a specific param has been set.  Prefer this over `params.key?` as the task params have special logic for interacting with any runner params that makes the traditional `key?` method unreliable.
+
+##### `before`, `prepend_before`, `after`, `prepend_after`
+
+[Like in the Config](https://github.com/redding/dk#before-prepend_before-after-prepend_after), you can add tasks as callbacks on other tasks using these helper methods:
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  def run!
+    before         SomeTask, MyBeforeTask
+    prepend_before SomeTask, MyOtherBeforeTask, 'some_param' => 'some_value'
+    after          SomeTask, MyAfterTask,       'some_param' => 'some_value'
+    prepend_after  SomeTask, MyOtherAfterTask
+  end
+
+end
+```
+
+Each callback can be optionally configured with a set of params.  Callbacks can either be appended or prepended (this can be especially useful when you want to control the order 3rd-party tasks are run in).  Once a callback is added, it works just as it would if added via the Config.
 
 ##### `ssh_hosts`
 
