@@ -637,6 +637,46 @@ module Dk::Task
 
   end
 
+  class CallbackPrivateHelpersTests < InitTests
+
+    should "append callbacks" do
+      subj   = Factory.string
+      cb     = Factory.string
+      params = Factory.string
+
+      @runner.add_task_callback('before', Factory.string, Factory.string, {})
+      subject.instance_eval{ before(subj, cb, params) }
+      callback = @runner.task_callbacks('before', subj).last
+      assert_equal cb,     callback.task_class
+      assert_equal params, callback.params
+
+      @runner.add_task_callback('after', Factory.string, Factory.string, {})
+      subject.instance_eval{ after(subj, cb, params) }
+      callback = @runner.task_callbacks('after', subj).last
+      assert_equal cb,     callback.task_class
+      assert_equal params, callback.params
+    end
+
+    should "prepend callbacks" do
+      subj   = Factory.string
+      cb     = Factory.string
+      params = Factory.string
+
+      @runner.add_task_callback('prepend_before', Factory.string, Factory.string, {})
+      subject.instance_eval{ prepend_before(subj, cb, params) }
+      callback = @runner.task_callbacks('prepend_before', subj).first
+      assert_equal cb,     callback.task_class
+      assert_equal params, callback.params
+
+      @runner.add_task_callback('prepend_after', Factory.string, Factory.string, {})
+      subject.instance_eval{ prepend_after(subj, cb, params) }
+      callback = @runner.task_callbacks('prepend_after', subj).first
+      assert_equal cb,     callback.task_class
+      assert_equal params, callback.params
+    end
+
+  end
+
   class SSHHostsPrivateHelpersTests < InitTests
 
     should "know and set its runner's ssh hosts" do

@@ -40,6 +40,17 @@ module Dk
       @task_callbacks[named][task_class] || []
     end
 
+    def task_callback_task_classes(named, task_class)
+      task_callbacks(named, task_class).map(&:task_class)
+    end
+
+    def add_task_callback(named, subject_task_class, callback_task_class, params)
+      @task_callbacks[named][subject_task_class] << Task::Callback.new(
+        callback_task_class,
+        params
+      )
+    end
+
     # called by CLI on top-level tasks
     def run(task_class, params = nil)
       build_and_run_task(task_class, params)
