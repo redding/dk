@@ -77,6 +77,8 @@ module Dk::Local
     def run_calls;   @scmd.run_calls;   end
     def run_called?; @scmd.run_called?; end
 
+    def ssh?; false; end
+
   end
 
 end

@@ -103,6 +103,8 @@ module Dk::Remote
     def run_calls;   @first_local_cmd_spy.scmd.start_calls;   end
     def run_called?; @first_local_cmd_spy.scmd.start_called?; end
 
+    def ssh?; true; end
+
   end
 
 end

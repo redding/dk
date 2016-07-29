@@ -225,7 +225,7 @@ module Dk::Remote
 
     should have_readers :cmd_opts
     should have_imeths :run_input, :stdout=, :stderr=, :exitstatus=
-    should have_imeths :run_calls, :run_called?
+    should have_imeths :run_calls, :run_called?, :ssh?
 
     should "build a local cmd spy for each host with the cmd str, given opts" do
       subject.hosts.each do |host|
@@ -284,6 +284,10 @@ module Dk::Remote
       subject.run
       assert_equal first_local_cmd_spy.scmd.start_calls,   subject.run_calls
       assert_equal first_local_cmd_spy.scmd.start_called?, subject.run_called?
+    end
+
+    should "be ssh" do
+      assert_true subject.ssh?
     end
 
   end

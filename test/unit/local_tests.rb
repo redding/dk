@@ -121,7 +121,7 @@ module Dk::Local
 
     should have_readers :cmd_opts
     should have_imeths :run_input, :stdout=, :stderr=, :exitstatus=
-    should have_imeths :run_calls, :run_called?
+    should have_imeths :run_calls, :run_called?, :ssh?
 
     should "build an scmd spy with the cmd str and any given options" do
       assert_equal [@cmd_str, { :env => nil }], @scmd_spy_new_called_with
@@ -157,6 +157,10 @@ module Dk::Local
       subject.run
       assert_equal @scmd_spy.run_calls,   subject.run_calls
       assert_equal @scmd_spy.run_called?, subject.run_called?
+    end
+
+    should "not be ssh" do
+      assert_false subject.ssh?
     end
 
   end
