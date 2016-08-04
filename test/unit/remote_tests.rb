@@ -14,7 +14,8 @@ module Dk::Remote
       @cmd_str       = Factory.string
 
       @opts = {
-        :env           => Factory.string,
+        :env           => { Factory.string => Factory.string },
+        :dry_tree_run  => Factory.boolean,
         :hosts         => @hosts,
         :ssh_args      => @ssh_args,
         :host_ssh_args => @host_ssh_args,
@@ -116,7 +117,10 @@ module Dk::Remote
         subject.ssh_args,
         subject.host_ssh_args
       )
-      exp_opts = { :env => @opts[:env] }
+      exp_opts = {
+        :env          => @opts[:env],
+        :dry_tree_run => @opts[:dry_tree_run]
+      }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_spy_new_called_with
 
       cmd = @cmd_class.new(Dk::Local::Cmd, @cmd_str, @opts)
@@ -131,7 +135,10 @@ module Dk::Remote
         cmd.ssh_args,
         cmd.host_ssh_args
       )
-      exp_opts = { :env => @opts[:env] }
+      exp_opts = {
+        :env          => @opts[:env],
+        :dry_tree_run => @opts[:dry_tree_run]
+      }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_new_called_with
     end
 
@@ -203,7 +210,10 @@ module Dk::Remote
         subject.ssh_args,
         subject.host_ssh_args
       )
-      exp_opts = { :env => nil }
+      exp_opts = {
+        :env          => nil,
+        :dry_tree_run => nil
+      }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_new_called_with
 
       cmd  = @cmd_class.new(@cmd_str, @opts)
@@ -218,7 +228,10 @@ module Dk::Remote
         cmd.ssh_args,
         cmd.host_ssh_args
       )
-      exp_opts = { :env => @opts[:env] }
+      exp_opts = {
+        :env          => @opts[:env],
+        :dry_tree_run => @opts[:dry_tree_run]
+      }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_new_called_with
     end
 
@@ -248,7 +261,10 @@ module Dk::Remote
         subject.ssh_args,
         subject.host_ssh_args
       )
-      exp_opts = { :env => nil }
+      exp_opts = {
+        :env          => nil,
+        :dry_tree_run => nil
+      }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_spy_new_called_with
 
       cmd = @cmd_class.new(@cmd_str, @opts)
@@ -263,7 +279,10 @@ module Dk::Remote
         cmd.ssh_args,
         cmd.host_ssh_args
       )
-      exp_opts = { :env => @opts[:env] }
+      exp_opts = {
+        :env          => @opts[:env],
+        :dry_tree_run => @opts[:dry_tree_run]
+      }
       assert_equal [exp_cmd_str, exp_opts], @local_cmd_spy_new_called_with
     end
 
