@@ -217,7 +217,7 @@ class Dk::Runner
     private
 
     def exp_log_output(cmd)
-      ( ["INFO -- #{cmd.cmd_str}\n"] +
+      ( ["DEBUG -- #{cmd.cmd_str}\n"] +
         cmd.output_lines.map{ |ol| "DEBUG -- #{ol.line}\n" }
       ).join("")
     end
@@ -257,7 +257,7 @@ class Dk::Runner
     private
 
     def exp_log_output(cmd)
-      ( ["INFO -- #{cmd.cmd_str}\n"] +
+      ( ["DEBUG -- #{cmd.cmd_str}\n"] +
         cmd.output_lines.map{ |ol| "DEBUG -- #{ol.line}\n" }
       ).join("")
     end

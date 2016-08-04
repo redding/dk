@@ -102,7 +102,7 @@ module Dk
     end
 
     def log_local_cmd(cmd, &block)
-      self.logger.info(cmd.cmd_str) # TODO: style up
+      self.logger.debug(cmd.cmd_str) # TODO: style up
       block.call(cmd)
       cmd.output_lines.each do |output_line|
         self.logger.debug(output_line.line) # TODO: style up, include name
@@ -122,7 +122,7 @@ module Dk
     end
 
     def log_remote_cmd(cmd, &block)
-      self.logger.info(cmd.cmd_str) # TODO: style up
+      self.logger.debug(cmd.cmd_str) # TODO: style up
       block.call(cmd)
       cmd.output_lines.each do |output_line|
         self.logger.debug(output_line.line) # TODO: style up, include name, host
