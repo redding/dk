@@ -121,13 +121,19 @@ module Dk::Task
     desc "when init"
     setup do
       @default_ssh_cmd_opts =  {
-        :ssh_args      => "",
-        :host_ssh_args => {},
-        :hosts         => [nil]
+        :ssh_args      => Factory.string,
+        :host_ssh_args => { Factory.string => Factory.string },
+        :hosts         => Factory.hosts
       }
 
+      @hosts_group_name = Factory.string
+      @runner_ssh_hosts = { @hosts_group_name => @default_ssh_cmd_opts[:hosts] }
+      @task_class.ssh_hosts @hosts_group_name
       @runner = test_runner(@task_class, {
-        :params => { Factory.string => Factory.string }
+        :params        => { Factory.string => Factory.string },
+        :ssh_hosts     => @runner_ssh_hosts,
+        :ssh_args      => @default_ssh_cmd_opts[:ssh_args],
+        :host_ssh_args => @default_ssh_cmd_opts[:host_ssh_args]
       })
       @task = @runner.task
     end
@@ -142,14 +148,16 @@ module Dk::Task
     end
 
     should "know its configured DSL ssh hosts" do
-      assert_nil subject.dk_dsl_ssh_hosts
+      assert_equal @hosts_group_name, subject.dk_dsl_ssh_hosts
 
       hosts      = Factory.hosts
       task_class = Class.new{ include Dk::Task; ssh_hosts hosts; }
-      runner     = test_runner(task_class)
-      task       = runner.task
-
+      task       = test_task(task_class)
       assert_equal hosts, task.dk_dsl_ssh_hosts
+
+      task_class = Class.new{ include Dk::Task }
+      task       = test_task(task_class)
+      assert_nil task.dk_dsl_ssh_hosts
     end
 
     should "know if it is equal to another task" do
@@ -689,7 +697,7 @@ module Dk::Task
       assert_equal hosts, subject.instance_eval{ ssh_hosts(group_name, hosts) }
       assert_equal hosts, subject.instance_eval{ ssh_hosts(group_name) }
 
-      exp = { group_name => hosts }
+      exp = @runner_ssh_hosts.merge(group_name => hosts)
       assert_equal exp,               @runner.ssh_hosts
       assert_equal @runner.ssh_hosts, subject.instance_eval{ ssh_hosts }
     end

@@ -83,6 +83,15 @@ module Dk::Remote
       assert_raises(NoHostsError) do
         @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, :hosts => [])
       end
+      assert_raises(NoHostsError) do
+        @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, :hosts => [nil])
+      end
+      assert_raises(NoHostsError) do
+        @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, :hosts => [Factory.string, nil])
+      end
+      assert_raises(NoHostsError) do
+        @cmd_class.new(Dk::Local::CmdSpy, @cmd_str, :hosts => [nil, Factory.string])
+      end
     end
 
     should "know its ssh args" do

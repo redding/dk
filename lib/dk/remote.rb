@@ -16,11 +16,11 @@ module Dk::Remote
 
     def initialize(local_cmd_or_spy_klass, cmd_str, opts)
       opts ||= {}
-      if (h = opts[:hosts]).nil? || !h.respond_to?(:empty?) || h.empty?
-        raise NoHostsError, "no hosts to run cmd on (#{h.inspect})"
+      if nil_or_empty_or_missing_hosts(opts[:hosts])
+        raise NoHostsError, "no hosts to run cmd on (#{opts[:hosts].inspect})"
       end
 
-      @hosts         = h.sort
+      @hosts         = opts[:hosts].sort
       @ssh_args      = opts[:ssh_args]      || Dk::Config::DEFAULT_SSH_ARGS.dup
       @host_ssh_args = opts[:host_ssh_args] || Dk::Config::DEFAULT_HOST_SSH_ARGS.dup
       @cmd_str       = cmd_str
@@ -55,6 +55,12 @@ module Dk::Remote
     end
 
     private
+
+    def nil_or_empty_or_missing_hosts(h)
+      h.nil? ||
+      !h.respond_to?(:empty?) || h.empty? ||
+      !h.respond_to?(:select) || h.select(&:nil?).size > 0
+    end
 
     # escape everything properly; run in sh to ensure full profile is loaded
     def ssh_cmd_str(cmd_str, host, args, host_args)
