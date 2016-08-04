@@ -21,6 +21,12 @@ module Dk::Local
         @scmd_spy
       end
 
+      @scmd_cmd_new_called_with = nil
+      Assert.stub(Scmd::Command, :new) do |*args|
+        @scmd_cmd_new_called_with = args
+        @scmd_spy
+      end
+
       @scmd_spy_new_called_with = nil
       Assert.stub(Scmd::CommandSpy, :new) do |*args|
         @scmd_spy_new_called_with = args
@@ -102,12 +108,20 @@ module Dk::Local
       @cmd = @cmd_class.new(@cmd_str)
     end
 
-    should "build an scmd with the cmd str and any given options" do
+    should "build an Scmd with the cmd str and any given options" do
       assert_equal [@cmd_str, { :env => nil }], @scmd_new_called_with
 
       opts = { :env => Factory.string }
       cmd  = @cmd_class.new(@cmd_str, opts)
       assert_equal [@cmd_str, { :env => opts[:env] }], @scmd_new_called_with
+    end
+
+    should "build an Scmd::Command (to bypass test mode spying) if the dry/tree run option given" do
+      opts = { :dry_tree_run => true }
+      cmd  = @cmd_class.new(@cmd_str, opts)
+
+      exp = [@cmd_str, { :env => nil }]
+      assert_equal exp, @scmd_cmd_new_called_with
     end
 
   end

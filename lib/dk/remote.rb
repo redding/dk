@@ -28,7 +28,9 @@ module Dk::Remote
       @local_cmds = @hosts.inject({}) do |cmds, host|
         cmds[host] = local_cmd_or_spy_klass.new(
           ssh_cmd_str(@cmd_str, host, @ssh_args, @host_ssh_args),
-          { :env => opts[:env] }
+          { :env          => opts[:env],
+            :dry_tree_run => opts[:dry_tree_run]
+          }
         )
         cmds
       end

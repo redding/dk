@@ -367,6 +367,24 @@ Use the `ssh` helper to run remote system cmds on hosts using ssh.  Like the nor
 
 The `ssh!` helper is identical to the `ssh` helper except that it raises a `Dk::Task::SSHRunError` if the command was not successful.
 
+##### `:dry_tree_run` cmd/ssh opt
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  def run!
+    cmd! "test -d some_file", :dry_tree_run => true
+    ssh! "test -d some_file", :dry_tree_run => true
+  end
+
+end
+```
+
+Use this option to force the cmd/ssh to *always* run, even using the `--dry-run` and `--tree` CLI options (which put Scmd in test mode and don't run any cmds by default).  The idea is that some cmds are essential to the running of the task and if they don't actually run, the task will error out.  This is handy for tasks that don't change anything they just read data and that data is used to determine how a task should proceed.  This allows you to still get the advantages of the dry run and tree CLI options.
+
 ##### `halt`
 
 ```ruby
