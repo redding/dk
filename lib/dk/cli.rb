@@ -29,6 +29,7 @@ module Dk
         }
         option 'dry-run', 'run the tasks without executing any local/remote cmds'
         option 'tree',    'print out the tree of tasks/sub-tasks that would be run'
+        option 'verbose', 'run tasks showing verbose (ie debug log level) details'
       end
     end
 
@@ -59,7 +60,9 @@ module Dk
       @clirb.parse!(args)
       raise ShowTaskList if @clirb.opts['list-tasks']
 
-      runner = get_runner(@clirb.opts)
+      @config.stdout_log_level('debug') if @clirb.opts['verbose']
+
+      runner = get_runner(@config, @clirb.opts)
       @clirb.args.each{ |task_name| runner.run(@config.task(task_name)) }
     end
 
@@ -82,13 +85,13 @@ module Dk
       File.expand_path(ENV['DK_CONFIG'] || DEFAULT_CONFIG_PATH, ENV['PWD'])
     end
 
-    def get_runner(opts)
+    def get_runner(config, opts)
       if opts['dry-run'] || opts['tree']
         ENV['SCMD_TEST_MODE'] = '1' # disable all local/remote cmds
       end
-      return Dk::DryRunner.new(@config) if opts['dry-run']
-      return Dk::TreeRunner.new(@config, @kernel) if opts['tree']
-      Dk::DkRunner.new(@config)
+      return Dk::DryRunner.new(config) if opts['dry-run']
+      return Dk::TreeRunner.new(config, @kernel) if opts['tree']
+      Dk::DkRunner.new(config)
     end
 
     ShowTaskList = Class.new(RuntimeError)
