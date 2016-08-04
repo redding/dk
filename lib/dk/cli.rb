@@ -66,12 +66,16 @@ module Dk
     def help
       "Usage: dk [TASKS] [options]\n\n" \
       "Tasks:\n" \
-      "#{task_list}\n\n" \
+      "#{task_list('    ')}\n\n" \
       "Options: #{@clirb}"
     end
 
-    def task_list
-      "TODO: task list here"
+    def task_list(prefix = '')
+      max_name_width = @config.tasks.keys.map(&:size).max
+      items = @config.tasks.map do |(name, task_class)|
+        "#{prefix}#{name.ljust(max_name_width)} # #{task_class.description}"
+      end
+      items.sort.join("\n")
     end
 
     def config_path

@@ -131,7 +131,12 @@ class Dk::CLI
     end
 
     should "list out the callable task details and exit" do
-      exp = "TODO: task list here\n"
+      max   = Dk.config.tasks.keys.map(&:size).max
+      tasks = Dk.config.tasks.map do |(name, task_class)|
+        "#{name.ljust(max)} # #{task_class.description}"
+      end
+
+      exp = "#{tasks.sort.join("\n")}\n"
       assert_equal exp, @kernel_spy.output
       assert_equal 0,   @kernel_spy.exit_status
     end
@@ -145,9 +150,14 @@ class Dk::CLI
     end
 
     should "print some help info and exit" do
+      max   = Dk.config.tasks.keys.map(&:size).max
+      tasks = Dk.config.tasks.map do |(name, task_class)|
+        "    #{name.ljust(max)} # #{task_class.description}"
+      end
+
       exp = "Usage: dk [TASKS] [options]\n\n" \
             "Tasks:\n" \
-            "TODO: task list here\n\n" \
+            "#{tasks.sort.join("\n")}\n\n" \
             "Options: #{subject.clirb.to_s}"
       assert_equal exp, @kernel_spy.output
       assert_equal 0,   @kernel_spy.exit_status
