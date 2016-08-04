@@ -143,6 +143,18 @@ class Dk::CLI
 
   end
 
+  class RunWithVerboseFlagTests < InitTests
+    desc "and run with the --verbose flag"
+    setup do
+      @cli.run('--verbose')
+    end
+
+    should "set the stdout log level to 'debug'" do
+      assert_equal 'debug', Dk.config.stdout_log_level
+    end
+
+  end
+
   class RunWithHelpFlagTests < InitTests
     desc "and run with the --help flag"
     setup do

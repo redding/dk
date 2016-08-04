@@ -33,10 +33,10 @@ class Dk::Config
       assert_equal Hash.new,           subject::DEFAULT_TASKS
       assert_equal "%m\n",             subject::DEFAULT_LOG_PATTERN
       assert_equal '[%d %-5l] : %m\n', subject::DEFAULT_LOG_FILE_PATTERN
+      assert_equal 'info',             subject::DEFAULT_STDOUT_LOG_LEVEL
     end
 
-    should "know the log levels to use for each output" do
-      assert_equal 'info',  subject::STDOUT_LOG_LEVEL
+    should "know the file output log level" do
       assert_equal 'debug', subject::FILE_LOG_LEVEL
     end
 
@@ -59,7 +59,7 @@ class Dk::Config
     should have_imeths :prepend_before_callback_task_classes
     should have_imeths :after_callback_task_classes
     should have_imeths :prepend_after_callback_task_classes
-    should have_imeths :task
+    should have_imeths :task, :stdout_log_level
     should have_imeths :log_pattern, :log_file, :log_file_pattern
     should have_imeths :dk_logger_stdout_output_name, :dk_logger_file_output_name
     should have_imeths :dk_logger
@@ -75,6 +75,7 @@ class Dk::Config
       assert_equal @config_class::DEFAULT_SSH_ARGS,         subject.ssh_args
       assert_equal @config_class::DEFAULT_HOST_SSH_ARGS,    subject.host_ssh_args
       assert_equal @config_class::DEFAULT_TASKS,            subject.tasks
+      assert_equal @config_class::DEFAULT_STDOUT_LOG_LEVEL, subject.stdout_log_level
       assert_equal @config_class::DEFAULT_LOG_PATTERN,      subject.log_pattern
       assert_equal @config_class::DEFAULT_LOG_FILE_PATTERN, subject.log_file_pattern
 
@@ -164,6 +165,14 @@ class Dk::Config
       end
     end
 
+    should "know its stdout log level" do
+      level = Factory.string
+
+      assert_equal @config_class::DEFAULT_STDOUT_LOG_LEVEL, subject.stdout_log_level
+      assert_equal level, subject.stdout_log_level(level)
+      assert_equal level, subject.stdout_log_level
+    end
+
     should "know its log pattern" do
       pattern = Factory.string
 
@@ -239,8 +248,8 @@ class Dk::Config
       assert_instance_of Logsly::Outputs::Stdout, out
 
       data = out.data(subject)
-      assert_equal @config_class::STDOUT_LOG_LEVEL, data.level
-      assert_equal @config.log_pattern,             data.pattern
+      assert_equal @config.stdout_log_level, data.level
+      assert_equal @config.log_pattern,      data.pattern
     end
 
   end

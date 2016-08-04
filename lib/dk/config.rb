@@ -24,9 +24,8 @@ module Dk
     DEFAULT_TASKS            = Hash.new{ |h, k| raise UnknownTaskError.new(k) }.freeze
     DEFAULT_LOG_PATTERN      = "%m\n".freeze
     DEFAULT_LOG_FILE_PATTERN = '[%d %-5l] : %m\n'.freeze
-
-    STDOUT_LOG_LEVEL = 'info'.freeze
-    FILE_LOG_LEVEL   = 'debug'.freeze
+    DEFAULT_STDOUT_LOG_LEVEL = 'info'.freeze
+    FILE_LOG_LEVEL           = 'debug'.freeze
 
     attr_reader :init_procs, :params
     attr_reader :before_callbacks, :prepend_before_callbacks
@@ -44,6 +43,7 @@ module Dk
       @ssh_args                 = DEFAULT_SSH_ARGS.dup
       @host_ssh_args            = DEFAULT_HOST_SSH_ARGS.dup
       @tasks                    = DEFAULT_TASKS.dup
+      @stdout_log_level         = DEFAULT_STDOUT_LOG_LEVEL
       @log_pattern              = DEFAULT_LOG_PATTERN
       @log_file                 = nil
       @log_file_pattern         = DEFAULT_LOG_FILE_PATTERN
@@ -111,6 +111,11 @@ module Dk
       @tasks[name.to_s]
     end
 
+    def stdout_log_level(value = nil)
+      @stdout_log_level = value if !value.nil?
+      @stdout_log_level
+    end
+
     def log_pattern(value = nil)
       @log_pattern = value if !value.nil?
       @log_pattern
@@ -153,7 +158,7 @@ module Dk
         @config = config # set the reader first so it can be used when supering
 
         Logsly.stdout(@config.dk_logger_stdout_output_name) do |logger|
-          level   Dk::Config::STDOUT_LOG_LEVEL
+          level   logger.config.stdout_log_level
           pattern logger.config.log_pattern
         end
         outputs = [@config.dk_logger_stdout_output_name]

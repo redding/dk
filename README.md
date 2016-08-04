@@ -53,13 +53,14 @@ $ dk --help
 Usage: dk [TASKS] [options]
 
 Tasks:
-my-other-task # my other task that does something great
-my-task       # my task that does something great
+    my-other-task # my other task that does something great
+    my-task       # my task that does something great
 
 Options:
     -T, --[no-]list-tasks            list all tasks available to run
     -d, --[no-]dry-run               run the tasks without executing any local/remote cmds
     -t, --[no-]tree                  print out the tree of tasks/sub-tasks that would be run
+    -v, --[no-]verbose               run tasks showing verbose (ie debug log level) details
         --version
         --help
 ```
@@ -85,6 +86,10 @@ This option runs the tasks like the live runner does and disables all system com
 TODO: show task tree output example
 
 Use this to show the user all the tasks/sub-tasks that are run and which parent tasks are running them.
+
+##### `--verbose` option
+
+This option runs tasks showing more verbose output/details (ie it sets the logger's stdout log level to 'debug').  All Task `log_debug` messages will be shown on stdout with this option.  This option also makes the stdout and file logs identical.
 
 ### Config
 
