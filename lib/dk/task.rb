@@ -23,10 +23,7 @@ module Dk
 
       def dk_run
         self.dk_run_callbacks 'before'
-        catch(:halt) do
-          halt if self.class.run_only_once && @dk_runner.has_run_task?(self.class)
-          self.run!
-        end
+        catch(:halt){ self.run! }
         self.dk_run_callbacks 'after'
       end
 

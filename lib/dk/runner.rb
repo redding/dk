@@ -53,12 +53,12 @@ module Dk
 
     # called by CLI on top-level tasks
     def run(task_class, params = nil)
-      build_and_run_task(task_class, params)
+      check_run_once_and_build_and_run_task(task_class, params)
     end
 
     # called by other tasks on sub-tasks
     def run_task(task_class, params = nil)
-      build_and_run_task(task_class, params)
+      check_run_once_and_build_and_run_task(task_class, params)
     end
 
     def log_info(msg);  self.logger.info(msg);  end # TODO: style up
@@ -78,6 +78,14 @@ module Dk
     end
 
     private
+
+    def check_run_once_and_build_and_run_task(task_class, params = nil)
+      if task_class.run_only_once && self.has_run_task?(task_class)
+        build_task(task_class, params)
+      else
+        build_and_run_task(task_class, params)
+      end
+    end
 
     def build_and_run_task(task_class, params = nil)
       build_task(task_class, params).tap do |task|

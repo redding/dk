@@ -114,7 +114,7 @@ class Dk::Runner
       assert_equal [callback], runner.task_callback_task_classes(name, subject)
     end
 
-    should "build and run a given task class" do
+    should "build and run a given task class, honoring any run only once setting" do
       params = { Factory.string => Factory.string }
 
       task = subject.run(TestTask)
@@ -132,6 +132,24 @@ class Dk::Runner
       task = subject.run_task(TestTask, params)
       assert_true task.run_called
       assert_equal params, task.run_params
+
+      TestTask.run_only_once(true)
+
+      task = subject.run(TestTask)
+      assert_nil task.run_called
+      assert_nil task.run_params
+
+      task = subject.run(TestTask, params)
+      assert_nil task.run_called
+      assert_nil task.run_params
+
+      task = subject.run_task(TestTask)
+      assert_nil task.run_called
+      assert_nil task.run_params
+
+      task = subject.run_task(TestTask, params)
+      assert_nil task.run_called
+      assert_nil task.run_params
     end
 
     should "call to its logger for its log_* methods" do
