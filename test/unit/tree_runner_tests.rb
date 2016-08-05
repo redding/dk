@@ -26,6 +26,11 @@ class Dk::TreeRunner
       assert_includes Dk::HasTheRuns, subject
     end
 
+    should "know its output level prefix/bullet" do
+      assert_equal '    ', subject::LEVEL_PREFIX
+      assert_equal '|-- ', subject::LEVEL_BULLET
+    end
+
   end
 
   class InitTests < UnitTests
@@ -87,7 +92,16 @@ class Dk::TreeRunner
     end
 
     should "output some info describing the tree of tasks that were run" do
-      exp = "TODO: task tree output goes here\n"
+      exp = " 1) Dk::TreeRunner::TestTask\n" \
+            "    |-- Dk::TreeRunner::TestTask::SubTask\n" \
+            "        |-- Dk::TreeRunner::TestTask::SubSubTask\n"
+      assert_equal exp, @kernal_puts_output
+
+      @runner.run(TestTask, @params)
+
+      exp += " 2) Dk::TreeRunner::TestTask\n" \
+             "    |-- Dk::TreeRunner::TestTask::SubTask\n" \
+             "        |-- Dk::TreeRunner::TestTask::SubSubTask\n"
       assert_equal exp, @kernal_puts_output
     end
 

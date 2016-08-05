@@ -89,8 +89,14 @@ module Dk
       if opts['dry-run'] || opts['tree']
         ENV['SCMD_TEST_MODE'] = '1' # disable all local/remote cmds
       end
+
       return Dk::DryRunner.new(config) if opts['dry-run']
-      return Dk::TreeRunner.new(config, @kernel) if opts['tree']
+
+      if opts['tree']
+        @kernel.puts "building task tree#{'s' if @clirb.args.size > 1}..."
+        return Dk::TreeRunner.new(config, @kernel)
+      end
+
       Dk::DkRunner.new(config)
     end
 
