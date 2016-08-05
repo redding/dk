@@ -32,9 +32,10 @@ module Dk
       end
 
       def dk_run_callbacks(named)
-        callbacks  = @dk_runner.task_callbacks("prepend_#{named}", self.class)
-        callbacks += (self.class.send("#{named}_callbacks") || [])
-        callbacks += @dk_runner.task_callbacks(named, self.class)
+        callbacks = CallbackSet.new
+        callbacks.add_callbacks(@dk_runner.task_callbacks("prepend_#{named}", self.class))
+        callbacks.add_callbacks(self.class.send("#{named}_callbacks") || [])
+        callbacks.add_callbacks(@dk_runner.task_callbacks(named, self.class))
         callbacks.each{ |c| run_task(c.task_class, c.params) }
       end
 
@@ -171,8 +172,8 @@ module Dk
       end
       alias_method :desc, :description
 
-      def before_callbacks; @before_callbacks ||= []; end
-      def after_callbacks;  @after_callbacks  ||= []; end
+      def before_callbacks; @before_callbacks ||= CallbackSet.new; end
+      def after_callbacks;  @after_callbacks  ||= CallbackSet.new; end
 
       def before_callback_task_classes; self.before_callbacks.map(&:task_class); end
       def after_callback_task_classes;  self.after_callbacks.map(&:task_class);  end
@@ -206,6 +207,17 @@ module Dk
     end
 
     Callback = Struct.new(:task_class, :params)
+
+    class CallbackSet < ::Array
+
+      def <<(callback);      super unless self.include?(callback); end
+      def unshift(callback); super unless self.include?(callback); end
+
+      def add_callbacks(callbacks)
+        callbacks.each{ |cb| self.<<(cb) }
+      end
+
+    end
 
     module TestHelpers
       include MuchPlugin

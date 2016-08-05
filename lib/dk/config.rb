@@ -17,7 +17,7 @@ module Dk
 
     DEFAULT_INIT_PROCS       = [].freeze
     DEFAULT_PARAMS           = {}.freeze
-    DEFAULT_CALLBACKS        = Hash.new{ |h, k| h[k] = [] }.freeze
+    DEFAULT_CALLBACKS        = Hash.new{ |h, k| h[k] = Dk::Task::CallbackSet.new }.freeze
     DEFAULT_SSH_HOSTS        = {}.freeze
     DEFAULT_SSH_ARGS         = ''.freeze
     DEFAULT_HOST_SSH_ARGS    = Hash.new{ |h, k| h[k] = DEFAULT_SSH_ARGS }

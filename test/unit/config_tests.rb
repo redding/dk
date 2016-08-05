@@ -140,6 +140,45 @@ class Dk::Config
       assert_equal exp, subject.prepend_after_callback_task_classes(subj_task_class)
     end
 
+    should "not duplicate callback tasks if they've already been added" do
+      subj_task_class  = Class.new{ include Dk::Task }
+      other_task_class = Factory.string
+      cb_task_class    = Factory.string
+      cb_params        = Factory.string
+
+      subject.before(subj_task_class, other_task_class)
+      subject.before(subj_task_class, other_task_class)
+      assert_equal 1, subject.before_callbacks[subj_task_class].size
+
+      subject.before(subj_task_class, cb_task_class, cb_params)
+      subject.before(subj_task_class, cb_task_class, cb_params)
+      assert_equal 2, subject.before_callbacks[subj_task_class].size
+
+      subject.after(subj_task_class, other_task_class)
+      subject.after(subj_task_class, other_task_class)
+      assert_equal 1, subject.after_callbacks[subj_task_class].size
+
+      subject.after(subj_task_class, cb_task_class, cb_params)
+      subject.after(subj_task_class, cb_task_class, cb_params)
+      assert_equal 2, subject.after_callbacks[subj_task_class].size
+
+      subject.prepend_before(subj_task_class, other_task_class)
+      subject.prepend_before(subj_task_class, other_task_class)
+      assert_equal 1, subject.prepend_before_callbacks[subj_task_class].size
+
+      subject.prepend_before(subj_task_class, cb_task_class, cb_params)
+      subject.prepend_before(subj_task_class, cb_task_class, cb_params)
+      assert_equal 2, subject.prepend_before_callbacks[subj_task_class].size
+
+      subject.prepend_after(subj_task_class, other_task_class)
+      subject.prepend_after(subj_task_class, other_task_class)
+      assert_equal 1, subject.prepend_after_callbacks[subj_task_class].size
+
+      subject.prepend_after(subj_task_class, cb_task_class, cb_params)
+      subject.prepend_after(subj_task_class, cb_task_class, cb_params)
+      assert_equal 2, subject.prepend_after_callbacks[subj_task_class].size
+    end
+
     should "add callable tasks" do
       assert_empty subject.tasks
 
