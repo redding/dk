@@ -237,6 +237,8 @@ module Dk::Task
       CallbacksTask.run_only_once false
     end
 
+    # the logic controlling this is in the runner, however this test exists
+    # as sort of a 'system-y' test to ensure the logic at the task level
     should "run only once" do
       @call_orders.reset
       @runner.run(CallbacksTask)
