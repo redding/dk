@@ -99,7 +99,7 @@ class Dk::CLI
 
   end
 
-  class RunWithDryTreeFlagTests < InitTests
+  class RunWithTreeFlagTests < InitTests
     desc "and run with the --tree flag"
     setup do
       @runner_init_with = nil
@@ -120,6 +120,12 @@ class Dk::CLI
       assert_equal [CLITestTask],            @runner_run_with
 
       assert_equal 0, @kernel_spy.exit_status
+      assert_match /^building task tree\.\.\./, @kernel_spy.output
+
+      kernel_spy = KernelSpy.new
+      cli = Dk::CLI.new(kernel_spy)
+      cli.run('cli-test-task', 'cli-test-task', '--tree')
+      assert_match /^building task trees\.\.\./, kernel_spy.output
     end
 
   end
