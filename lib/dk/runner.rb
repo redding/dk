@@ -13,8 +13,12 @@ module Dk
     include Dk::HasSetParam
     include Dk::HasSSHOpts
 
-    TASK_START_LOG_PREFIX  = '> '.freeze
-    INDENTATION_LOG_PREFIX = '    '.freeze
+    TASK_START_LOG_PREFIX  = '***** '.freeze
+    TASK_END_LOG_PREFIX    = '..... '.freeze
+    INDENT_LOG_PREFIX      = '      '.freeze
+    CMD_LOG_PREFIX         = '[CMD] '.freeze
+    SSH_LOG_PREFIX         = '[SSH] '.freeze
+    CMD_SSH_OUT_LOG_PREFIX = "#{INDENT_LOG_PREFIX}> ".freeze
 
     attr_reader :params, :logger
 
@@ -65,15 +69,15 @@ module Dk
       check_run_once_and_build_and_run_task(task_class, params)
     end
 
-    def log_info(msg);  self.logger.info(log_msg(1, msg)); end
-    def log_debug(msg); self.logger.debug(log_msg(1, msg)); end
-    def log_error(msg); self.logger.error(log_msg(1, msg)); end
+    def log_info(msg);  self.logger.info("#{INDENT_LOG_PREFIX}#{msg}"); end
+    def log_debug(msg); self.logger.debug("#{INDENT_LOG_PREFIX}#{msg}"); end
+    def log_error(msg); self.logger.error("#{INDENT_LOG_PREFIX}#{msg}"); end
 
     def log_task_run(task_class, &run_block)
       self.logger.info ""
-      self.logger.info "#{TASK_START_LOG_PREFIX}#{task_class} ..."
+      self.logger.info "#{TASK_START_LOG_PREFIX}#{task_class}"
       time = Benchmark.realtime(&run_block)
-      self.logger.info "... #{task_class} (#{self.pretty_run_time(time)})"
+      self.logger.info "#{TASK_END_LOG_PREFIX}#{task_class} (#{self.pretty_run_time(time)})"
     end
 
     def cmd(cmd_str, input, given_opts)
@@ -97,10 +101,6 @@ module Dk
     end
 
     private
-
-    def log_msg(indentation_level, msg)
-      "#{INDENTATION_LOG_PREFIX*indentation_level}#{msg}"
-    end
 
     def check_run_once_and_build_and_run_task(task_class, params = nil)
       if task_class.run_only_once && self.has_run_task?(task_class)
@@ -133,10 +133,10 @@ module Dk
     end
 
     def log_local_cmd(cmd, &block)
-      self.logger.debug(cmd.cmd_str) # TODO: style up
+      self.logger.info("#{CMD_LOG_PREFIX}#{cmd.cmd_str}")
       block.call(cmd)
       cmd.output_lines.each do |output_line|
-        self.logger.debug(output_line.line) # TODO: style up, include name
+        self.logger.debug("#{CMD_SSH_OUT_LOG_PREFIX}#{output_line.line}")
       end
       cmd
     end
@@ -153,10 +153,15 @@ module Dk
     end
 
     def log_remote_cmd(cmd, &block)
-      self.logger.debug(cmd.cmd_str) # TODO: style up
-      block.call(cmd)
+      self.logger.info("#{SSH_LOG_PREFIX}#{cmd.cmd_str}")
+      self.logger.debug("#{INDENT_LOG_PREFIX}#{cmd.ssh_cmd_str('<host>')}")
+      cmd.hosts.each do |host|
+        self.logger.info("#{INDENT_LOG_PREFIX}[#{host}]")
+      end
+      time = Benchmark.realtime{ block.call(cmd) }
+      self.logger.info("#{INDENT_LOG_PREFIX}(#{self.pretty_run_time(time)})")
       cmd.output_lines.each do |output_line|
-        self.logger.debug(output_line.line) # TODO: style up, include name, host
+        self.logger.debug("#{CMD_SSH_OUT_LOG_PREFIX}#{output_line.line}")
       end
       cmd
     end

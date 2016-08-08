@@ -27,8 +27,13 @@ class Dk::Runner
     end
 
     should "know its log prefix values" do
-      assert_equal '> ',     subject::TASK_START_LOG_PREFIX
-      assert_equal '    ',   subject::INDENTATION_LOG_PREFIX
+      assert_equal '***** ', subject::TASK_START_LOG_PREFIX
+      assert_equal '..... ', subject::TASK_END_LOG_PREFIX
+      assert_equal '      ', subject::INDENT_LOG_PREFIX
+      assert_equal '[CMD] ', subject::CMD_LOG_PREFIX
+      assert_equal '[SSH] ', subject::SSH_LOG_PREFIX
+
+      assert_equal "#{INDENT_LOG_PREFIX}> ", subject::CMD_SSH_OUT_LOG_PREFIX
     end
 
   end
@@ -170,15 +175,15 @@ class Dk::Runner
       msg = Factory.string
 
       subject.log_info msg
-      exp = ["#{INDENTATION_LOG_PREFIX}#{msg}"]
+      exp = ["#{INDENT_LOG_PREFIX}#{msg}"]
       assert_equal exp, logger_info_called_with
 
       subject.log_debug msg
-      exp = ["#{INDENTATION_LOG_PREFIX}#{msg}"]
+      exp = ["#{INDENT_LOG_PREFIX}#{msg}"]
       assert_equal exp, logger_debug_called_with
 
       subject.log_error msg
-      exp = ["#{INDENTATION_LOG_PREFIX}#{msg}"]
+      exp = ["#{INDENT_LOG_PREFIX}#{msg}"]
       assert_equal exp, logger_error_called_with
     end
 
@@ -194,8 +199,8 @@ class Dk::Runner
 
       exp = [
         [""],
-        ["#{TASK_START_LOG_PREFIX}#{task_class} ..."],
-        ["... #{task_class} (#{pretty_run_time})"]
+        ["#{TASK_START_LOG_PREFIX}#{task_class}"],
+        ["#{TASK_END_LOG_PREFIX}#{task_class} (#{pretty_run_time})"]
       ]
       assert_equal exp, logger_info_calls
     end
@@ -271,8 +276,10 @@ class Dk::Runner
     private
 
     def exp_log_output(cmd)
-      ( ["DEBUG -- #{cmd.cmd_str}\n"] +
-        cmd.output_lines.map{ |ol| "DEBUG -- #{ol.line}\n" }
+      ( ["INFO -- #{CMD_LOG_PREFIX}#{cmd.cmd_str}\n"] +
+        cmd.output_lines.map do |ol|
+          "DEBUG -- #{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}\n"
+        end
       ).join("")
     end
 
@@ -293,6 +300,9 @@ class Dk::Runner
       end
 
       @runner = @runner_class.new(@runner_opts)
+
+      @pretty_run_time = Factory.string
+      Assert.stub(subject, :pretty_run_time){ @pretty_run_time }
     end
 
     should "build, log and run remote cmds" do
@@ -311,8 +321,13 @@ class Dk::Runner
     private
 
     def exp_log_output(cmd)
-      ( ["DEBUG -- #{cmd.cmd_str}\n"] +
-        cmd.output_lines.map{ |ol| "DEBUG -- #{ol.line}\n" }
+      ( ["INFO -- #{SSH_LOG_PREFIX}#{cmd.cmd_str}\n"] +
+        ["DEBUG -- #{INDENT_LOG_PREFIX}#{cmd.ssh_cmd_str('<host>')}\n"] +
+        cmd.hosts.map{ |h| "INFO -- #{INDENT_LOG_PREFIX}[#{h}]\n" } +
+        ["INFO -- #{INDENT_LOG_PREFIX}(#{@pretty_run_time})\n"] +
+        cmd.output_lines.map do |ol|
+          "DEBUG -- #{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}\n"
+        end
       ).join("")
     end
 
