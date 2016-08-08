@@ -231,6 +231,17 @@ module Dk::Task
       assert_equal 11, @call_orders.runner_after_call_order
     end
 
+    should "log the task run with its runner" do
+      runner = test_runner(@task_class)
+
+      log_task_run_called_with = nil
+      Assert.stub(runner, :log_task_run){ |*args| log_task_run_called_with = args }
+      task = @task_class.new(runner)
+      task.dk_run
+
+      assert_equal [@task_class], log_task_run_called_with
+    end
+
   end
 
   class RunOnlyOnceTests < RunTests
