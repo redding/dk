@@ -1,3 +1,4 @@
+require 'benchmark'
 require 'set'
 require 'dk/config'
 require 'dk/has_set_param'
@@ -65,6 +66,12 @@ module Dk
     def log_debug(msg); self.logger.debug(msg); end # TODO: style up
     def log_error(msg); self.logger.error(msg); end # TODO: style up
 
+    def log_task_run(task_class, &run_block)
+      self.logger.info("> #{task_class} ...")
+      time = Benchmark.realtime(&run_block)
+      self.logger.info("  ... #{task_class} (#{self.pretty_run_time(time)})")
+    end
+
     def cmd(cmd_str, input, given_opts)
       build_and_run_local_cmd(cmd_str, input, given_opts)
     end
@@ -75,6 +82,14 @@ module Dk
 
     def has_run_task?(task_class)
       @has_run_task_classes.include?(task_class)
+    end
+
+    def pretty_run_time(raw_run_time)
+      if raw_run_time >= 1.0 # seconds
+        "#{raw_run_time / 60}:#{(raw_run_time % 60).to_s.rjust(2, '0')}s"
+      else
+        "#{(raw_run_time * 1000 * 10.0).round / 10.0}ms"
+      end
     end
 
     private

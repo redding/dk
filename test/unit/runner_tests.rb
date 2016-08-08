@@ -43,9 +43,9 @@ class Dk::Runner
     should have_imeths :task_callbacks, :task_callback_task_classes
     should have_imeths :add_task_callback
     should have_imeths :run, :run_task
-    should have_imeths :log_info, :log_debug, :log_error
+    should have_imeths :log_info, :log_debug, :log_error, :log_task_run
     should have_imeths :cmd, :ssh
-    should have_imeths :has_run_task?
+    should have_imeths :has_run_task?, :pretty_run_time
 
     should "know its attrs" do
       assert_equal @args[:params], subject.params
@@ -152,7 +152,7 @@ class Dk::Runner
       assert_nil task.run_params
     end
 
-    should "call to its logger for its log_* methods" do
+    should "call to its logger for its log_{info|debug|error} methods" do
       logger_info_called_with = nil
       Assert.stub(@args[:logger], :info){ |*args| logger_info_called_with = args }
 
@@ -174,6 +174,23 @@ class Dk::Runner
       assert_equal [msg], logger_error_called_with
     end
 
+    should "log the start/finish of task runs, including their run time" do
+      logger_info_calls = []
+      Assert.stub(@args[:logger], :info){ |*args| logger_info_calls << args }
+
+      pretty_run_time = Factory.string
+      Assert.stub(subject, :pretty_run_time){ pretty_run_time }
+
+      task_class = Class.new{ include Dk::Task; def run!; end }
+      subject.log_task_run(task_class){}
+
+      exp = [
+        ["> #{task_class} ..."],
+        ["  ... #{task_class} (#{pretty_run_time})"]
+      ]
+      assert_equal exp, logger_info_calls
+    end
+
     should "know if it has run a task or not" do
       assert_false subject.has_run_task?(TestTask)
       subject.run(TestTask)
@@ -183,6 +200,16 @@ class Dk::Runner
       assert_false subject.has_run_task?(task_class)
       subject.run_task(task_class)
       assert_true subject.has_run_task?(task_class)
+    end
+
+    should "know how to format raw run times and make them 'pretty'" do
+      run_time = Factory.float(1.0)
+      exp = "#{(run_time * 10_000).round / 10.0}ms"
+      assert_equal exp, subject.pretty_run_time(run_time)
+
+      run_time = Factory.float(10.0) + 1.0
+      exp = "#{run_time / 60}:#{(run_time % 60).to_s.rjust(2, '0')}s"
+      assert_equal exp, subject.pretty_run_time(run_time)
     end
 
   end
