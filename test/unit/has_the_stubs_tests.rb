@@ -54,34 +54,34 @@ module Dk::HasTheStubs
     end
     subject{ @instance }
 
-    should have_imeths :stub_cmd, :unstub_cmd, :unstub_all_cmds
-    should have_imeths :stub_ssh, :unstub_ssh, :unstub_all_ssh
+    should have_imeths :stub_cmd, :unstub_cmd, :unstub_all_cmds, :local_cmd_stubs
+    should have_imeths :stub_ssh, :unstub_ssh, :unstub_all_ssh, :remote_cmd_stubs
 
     should "allow stubbing cmds" do
-      assert_equal 0, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 0, subject.instance_eval{ local_cmd_stub_blocks.size }
 
       subject.stub_cmd(@cmd_str, &@stub_block)
-      assert_equal 1, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 1, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
 
       subject.stub_cmd(@cmd_str, @cmd_input, &@stub_block)
-      assert_equal 2, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 2, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
 
       subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
-      assert_equal 3, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 3, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
 
       subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
-      assert_equal 4, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 4, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
     end
 
@@ -91,30 +91,30 @@ module Dk::HasTheStubs
       subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
       subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
 
-      assert_equal 4, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 4, subject.instance_eval{ local_cmd_stub_blocks.size }
 
       subject.unstub_cmd(@cmd_str)
-      assert_equal 3, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 3, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
 
       subject.unstub_cmd(@cmd_str, @cmd_input)
-      assert_equal 2, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 2, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
 
       subject.unstub_cmd(@cmd_str, @cmd_opts)
-      assert_equal 1, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 1, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
 
       subject.unstub_cmd(@cmd_str, @cmd_input, @cmd_opts)
-      assert_equal 0, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 0, subject.instance_eval{ local_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
     end
 
@@ -131,36 +131,52 @@ module Dk::HasTheStubs
       subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
       subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
 
-      assert_equal 4, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 4, subject.instance_eval{ local_cmd_stub_blocks.size }
       subject.unstub_all_cmds
-      assert_equal 0, subject.instance_eval{ local_cmd_spy_blocks.size }
+      assert_equal 0, subject.instance_eval{ local_cmd_stub_blocks.size }
+    end
+
+    should "know its local cmd stubs" do
+      subject.stub_cmd(@cmd_str, &@stub_block)
+      subject.stub_cmd(@cmd_str, @cmd_input, &@stub_block)
+      subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
+      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
+
+      exp = Stub.new(@cmd_str, nil, nil, @stub_block)
+      assert_includes exp, subject.local_cmd_stubs
+      exp = Stub.new(@cmd_str, @cmd_input, nil, @stub_block)
+      assert_includes exp, subject.local_cmd_stubs
+      exp = Stub.new(@cmd_str, nil, @cmd_opts, @stub_block)
+      assert_includes exp, subject.local_cmd_stubs
+      exp = Stub.new(@cmd_str, @cmd_input, @cmd_opts, @stub_block)
+      assert_includes exp, subject.local_cmd_stubs
     end
 
     should "allow stubbing ssh" do
-      assert_equal 0, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 0, subject.instance_eval{ remote_cmd_stub_blocks.size }
 
       subject.stub_ssh(@cmd_str, &@stub_block)
-      assert_equal 1, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 1, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
 
       subject.stub_ssh(@cmd_str, @cmd_input, &@stub_block)
-      assert_equal 2, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 2, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
 
       subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
-      assert_equal 3, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 3, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
 
       subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
-      assert_equal 4, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 4, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_same @stub_block, spy_block
     end
 
@@ -170,30 +186,30 @@ module Dk::HasTheStubs
       subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
       subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
 
-      assert_equal 4, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 4, subject.instance_eval{ remote_cmd_stub_blocks.size }
 
       subject.unstub_ssh(@cmd_str)
-      assert_equal 3, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 3, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
 
       subject.unstub_ssh(@cmd_str, @cmd_input)
-      assert_equal 2, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 2, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
 
       subject.unstub_ssh(@cmd_str, @given_ssh_opts)
-      assert_equal 1, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 1, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, nil, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
 
       subject.unstub_ssh(@cmd_str, @cmd_input, @given_ssh_opts)
-      assert_equal 0, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 0, subject.instance_eval{ remote_cmd_stub_blocks.size }
       exp_key   = [@cmd_str, @cmd_input, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_spy_blocks[exp_key] }
+      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
       assert_nil spy_block
     end
 
@@ -210,9 +226,25 @@ module Dk::HasTheStubs
       subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
       subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
 
-      assert_equal 4, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 4, subject.instance_eval{ remote_cmd_stub_blocks.size }
       subject.unstub_all_ssh
-      assert_equal 0, subject.instance_eval{ remote_cmd_spy_blocks.size }
+      assert_equal 0, subject.instance_eval{ remote_cmd_stub_blocks.size }
+    end
+
+    should "know its remote cmd stubs" do
+      subject.stub_ssh(@cmd_str, &@stub_block)
+      subject.stub_ssh(@cmd_str, @cmd_input, &@stub_block)
+      subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
+      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
+
+      exp = Stub.new(@cmd_str, nil, nil, @stub_block)
+      assert_includes exp, subject.remote_cmd_stubs
+      exp = Stub.new(@cmd_str, @cmd_input, nil, @stub_block)
+      assert_includes exp, subject.remote_cmd_stubs
+      exp = Stub.new(@cmd_str, nil, @given_ssh_opts, @stub_block)
+      assert_includes exp, subject.remote_cmd_stubs
+      exp = Stub.new(@cmd_str, @cmd_input, @given_ssh_opts, @stub_block)
+      assert_includes exp, subject.remote_cmd_stubs
     end
 
     # test the `Runner` interface that this overwrites, these are private
