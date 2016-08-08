@@ -178,12 +178,16 @@ module Dk::Task
       @call_orders = CallOrders.new
 
       # build a base runner and task manually so the callback tasks actually
-      # run (b/c the test runner doesn't run callbacks)
+      # run (b/c the test runner doesn't run callbacks).  Note: the task's
+      # callbacks are intentionally duplicated on the runner to ensure that
+      # duplicate runner/task callbacks are ignored and the callback is only
+      # run once
       @runner = Dk::Runner.new({
         :params                   => { 'call_orders' => @call_orders },
         :before_callbacks         => {
           CallbacksTask => [
-            Callback.new(CallbackTask, 'callback' => 'runner_before')
+            Callback.new(CallbackTask, 'callback' => 'runner_before'),
+            *CallbacksTask.before_callbacks
           ]
         },
         :prepend_before_callbacks => {
@@ -193,7 +197,8 @@ module Dk::Task
         },
         :after_callbacks          => {
           CallbacksTask => [
-            Callback.new(CallbackTask, 'callback' => 'runner_after')
+            Callback.new(CallbackTask, 'callback' => 'runner_after'),
+            *CallbacksTask.after_callbacks
           ]
         },
         :prepend_after_callbacks  => {
@@ -862,12 +867,22 @@ module Dk::Task
   class CallbacksTask
     include Dk::Task
 
+    # note: callbacks are intentionally duplicated here to help test that
+    # duplicate callbacks are not allowed.  if these duplicate callbacks each
+    # ran, they would break the callback order tests.
+
+    before         CallbackTask, 'callback' => 'first_before'
     before         CallbackTask, 'callback' => 'first_before'
     before         CallbackTask, 'callback' => 'second_before'
+    before         CallbackTask, 'callback' => 'second_before'
+    prepend_before CallbackTask, 'callback' => 'prepend_before'
     prepend_before CallbackTask, 'callback' => 'prepend_before'
 
     after         CallbackTask, 'callback' => 'first_after'
+    after         CallbackTask, 'callback' => 'first_after'
     after         CallbackTask, 'callback' => 'second_after'
+    after         CallbackTask, 'callback' => 'second_after'
+    prepend_after CallbackTask, 'callback' => 'prepend_after'
     prepend_after CallbackTask, 'callback' => 'prepend_after'
 
     run_only_once false
