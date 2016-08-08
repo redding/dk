@@ -34,6 +34,7 @@ class Dk::Config
       assert_equal "%m\n",             subject::DEFAULT_LOG_PATTERN
       assert_equal '[%d %-5l] : %m\n', subject::DEFAULT_LOG_FILE_PATTERN
       assert_equal 'info',             subject::DEFAULT_STDOUT_LOG_LEVEL
+      assert_equal Array.new,          subject::DEFAULT_STUBS
     end
 
     should "know the file output log level" do
@@ -52,7 +53,7 @@ class Dk::Config
     should have_readers :init_procs, :params
     should have_readers :before_callbacks, :prepend_before_callbacks
     should have_readers :after_callbacks, :prepend_after_callbacks
-    should have_readers :tasks
+    should have_readers :tasks, :dry_tree_cmd_stubs, :dry_tree_ssh_stubs
     should have_imeths :init
     should have_imeths :before, :prepend_before, :after, :prepend_after
     should have_imeths :before_callback_task_classes
@@ -61,6 +62,7 @@ class Dk::Config
     should have_imeths :prepend_after_callback_task_classes
     should have_imeths :task, :stdout_log_level
     should have_imeths :log_pattern, :log_file, :log_file_pattern
+    should have_imeths :stub_dry_tree_cmd, :stub_dry_tree_ssh
     should have_imeths :dk_logger_stdout_output_name, :dk_logger_file_output_name
     should have_imeths :dk_logger
 
@@ -78,6 +80,8 @@ class Dk::Config
       assert_equal @config_class::DEFAULT_STDOUT_LOG_LEVEL, subject.stdout_log_level
       assert_equal @config_class::DEFAULT_LOG_PATTERN,      subject.log_pattern
       assert_equal @config_class::DEFAULT_LOG_FILE_PATTERN, subject.log_file_pattern
+      assert_equal @config_class::DEFAULT_STUBS,            subject.dry_tree_cmd_stubs
+      assert_equal @config_class::DEFAULT_STUBS,            subject.dry_tree_ssh_stubs
 
       assert_nil subject.log_file
     end
@@ -234,6 +238,64 @@ class Dk::Config
       assert_equal @config_class::DEFAULT_LOG_FILE_PATTERN, subject.log_file_pattern
       assert_equal pattern, subject.log_file_pattern(pattern)
       assert_equal pattern, subject.log_file_pattern
+    end
+
+    should "allow adding dry tree runner cmd stubs" do
+      cmd_str    = Factory.string
+      cmd_input  = Factory.string
+      cmd_opts   = { Factory.string => Factory.string }
+      stub_block = Proc.new{ Factory.string }
+
+      assert_equal 0, subject.dry_tree_cmd_stubs.size
+
+      subject.stub_dry_tree_cmd(cmd_str, &stub_block)
+      assert_equal 1, subject.dry_tree_cmd_stubs.size
+      exp = DryTreeStub.new(cmd_str, nil, nil, stub_block)
+      assert_includes exp, subject.dry_tree_cmd_stubs
+
+      subject.stub_dry_tree_cmd(cmd_str, cmd_input, &stub_block)
+      assert_equal 2, subject.dry_tree_cmd_stubs.size
+      exp = DryTreeStub.new(cmd_str, cmd_input, nil, stub_block)
+      assert_includes exp, subject.dry_tree_cmd_stubs
+
+      subject.stub_dry_tree_cmd(cmd_str, cmd_opts, &stub_block)
+      assert_equal 3, subject.dry_tree_cmd_stubs.size
+      exp = DryTreeStub.new(cmd_str, nil, cmd_opts, stub_block)
+      assert_includes exp, subject.dry_tree_cmd_stubs
+
+      subject.stub_dry_tree_cmd(cmd_str, cmd_input, cmd_opts, &stub_block)
+      assert_equal 4, subject.dry_tree_cmd_stubs.size
+      exp = DryTreeStub.new(cmd_str, cmd_input, cmd_opts, stub_block)
+      assert_includes exp, subject.dry_tree_cmd_stubs
+    end
+
+    should "allow adding dry tree runner ssh stubs" do
+      cmd_str    = Factory.string
+      cmd_input  = Factory.string
+      ssh_opts   = Factory.ssh_cmd_opts
+      stub_block = Proc.new{ Factory.string }
+
+      assert_equal 0, subject.dry_tree_ssh_stubs.size
+
+      subject.stub_dry_tree_ssh(cmd_str, &stub_block)
+      assert_equal 1, subject.dry_tree_ssh_stubs.size
+      exp = DryTreeStub.new(cmd_str, nil, nil, stub_block)
+      assert_includes exp, subject.dry_tree_ssh_stubs
+
+      subject.stub_dry_tree_ssh(cmd_str, cmd_input, &stub_block)
+      assert_equal 2, subject.dry_tree_ssh_stubs.size
+      exp = DryTreeStub.new(cmd_str, cmd_input, nil, stub_block)
+      assert_includes exp, subject.dry_tree_ssh_stubs
+
+      subject.stub_dry_tree_ssh(cmd_str, ssh_opts, &stub_block)
+      assert_equal 3, subject.dry_tree_ssh_stubs.size
+      exp = DryTreeStub.new(cmd_str, nil, ssh_opts, stub_block)
+      assert_includes exp, subject.dry_tree_ssh_stubs
+
+      subject.stub_dry_tree_ssh(cmd_str, cmd_input, ssh_opts, &stub_block)
+      assert_equal 4, subject.dry_tree_ssh_stubs.size
+      exp = DryTreeStub.new(cmd_str, cmd_input, ssh_opts, stub_block)
+      assert_includes exp, subject.dry_tree_ssh_stubs
     end
 
     should "know its logger output names" do
