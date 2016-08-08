@@ -50,8 +50,7 @@ module Dk::Local
   class Cmd < BaseCmd
 
     def initialize(cmd_str, opts = nil)
-      opts ||= {}
-      super(opts[:dry_tree_run] ? Scmd::Command : Scmd, cmd_str, opts)
+      super(Scmd, cmd_str, opts)
     end
 
   end

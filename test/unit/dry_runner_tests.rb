@@ -16,6 +16,10 @@ class Dk::DryRunner
       assert_true subject < Dk::ConfigRunner
     end
 
+    should "have the stubs" do
+      assert_includes Dk::HasTheStubs, subject
+    end
+
   end
 
 end
