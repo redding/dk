@@ -63,6 +63,7 @@ module Dk
       @config.stdout_log_level('debug') if @clirb.opts['verbose']
 
       runner = get_runner(@config, @clirb.opts)
+      runner.log_cli_run(args.join(' '))
       @clirb.args.each{ |task_name| runner.run(@config.task(task_name)) }
     end
 
