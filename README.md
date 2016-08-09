@@ -447,6 +447,15 @@ end
 
 Use the `log_*` helpers to log information as the task is running.  Each corresponds to a logger level.  The CLI logs to stdout on the INFO level by default.  When run in verbose mode, it logs to stdout on the DEBUG level.  If an optional log file has been configured, the CLI will log to the file on DEBUG level regardless of any verbose mode setting.
 
+You can optionally style your log messages:
+
+```ruby
+log_info "my message", :red, :on_white
+log_info "my " + Dk::Ansi.styled_msg("special", :bold, :blue) + " message"
+```
+
+See `Dk::Ansi::CODES.keys` for a list of available style names.
+
 #### Task Descriptions
 
 ```ruby

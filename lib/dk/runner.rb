@@ -1,5 +1,6 @@
 require 'benchmark'
 require 'set'
+require 'dk/ansi'
 require 'dk/config'
 require 'dk/has_set_param'
 require 'dk/has_ssh_opts'
@@ -69,9 +70,17 @@ module Dk
       check_run_once_and_build_and_run_task(task_class, params)
     end
 
-    def log_info(msg);  self.logger.info("#{INDENT_LOG_PREFIX}#{msg}"); end
-    def log_debug(msg); self.logger.debug("#{INDENT_LOG_PREFIX}#{msg}"); end
-    def log_error(msg); self.logger.error("#{INDENT_LOG_PREFIX}#{msg}"); end
+    def log_info(msg, *ansi_styles)
+      self.logger.info("#{INDENT_LOG_PREFIX}#{Ansi.styled_msg(msg, *ansi_styles)}")
+    end
+
+    def log_debug(msg, *ansi_styles)
+      self.logger.debug("#{INDENT_LOG_PREFIX}#{Ansi.styled_msg(msg, *ansi_styles)}")
+    end
+
+    def log_error(msg, *ansi_styles)
+      self.logger.error("#{INDENT_LOG_PREFIX}#{Ansi.styled_msg(msg, *ansi_styles)}")
+    end
 
     def log_task_run(task_class, &run_block)
       self.logger.info ""
