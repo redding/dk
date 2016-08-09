@@ -8,6 +8,16 @@ module Dk
 
     # run with disabled cmds, just log actions, but run all sub-tasks
 
+    def initialize(config, *args)
+      super(config, *args)
+      config.dry_tree_cmd_stubs.each do |s|
+        self.stub_cmd(s.cmd_str, s.input, s.given_opts, &s.block)
+      end
+      config.dry_tree_ssh_stubs.each do |s|
+        self.stub_ssh(s.cmd_str, s.input, s.given_opts, &s.block)
+      end
+    end
+
     private
 
     def has_the_stubs_build_local_cmd(cmd_str, given_opts)
