@@ -25,12 +25,13 @@ module Dk
     DEFAULT_LOG_PATTERN      = "%m\n".freeze
     DEFAULT_LOG_FILE_PATTERN = '[%d %-5l] : %m\n'.freeze
     DEFAULT_STDOUT_LOG_LEVEL = 'info'.freeze
+    DEFAULT_STUBS            = [].freeze
     FILE_LOG_LEVEL           = 'debug'.freeze
 
     attr_reader :init_procs, :params
     attr_reader :before_callbacks, :prepend_before_callbacks
     attr_reader :after_callbacks, :prepend_after_callbacks
-    attr_reader :tasks
+    attr_reader :tasks, :dry_tree_cmd_stubs, :dry_tree_ssh_stubs
 
     def initialize
       @init_procs               = DEFAULT_INIT_PROCS.dup
@@ -47,6 +48,8 @@ module Dk
       @log_pattern              = DEFAULT_LOG_PATTERN
       @log_file                 = nil
       @log_file_pattern         = DEFAULT_LOG_FILE_PATTERN
+      @dry_tree_cmd_stubs       = DEFAULT_STUBS.dup
+      @dry_tree_ssh_stubs       = DEFAULT_STUBS.dup
     end
 
     def init
@@ -131,6 +134,18 @@ module Dk
       @log_file_pattern
     end
 
+    def stub_dry_tree_cmd(cmd_str, *args, &block)
+      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+      input      = args.last
+      @dry_tree_cmd_stubs << DryTreeStub.new(cmd_str, input, given_opts, block)
+    end
+
+    def stub_dry_tree_ssh(cmd_str, *args, &block)
+      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+      input      = args.last
+      @dry_tree_ssh_stubs << DryTreeStub.new(cmd_str, input, given_opts, block)
+    end
+
     # private - intended for internal use only
 
     def dk_logger_stdout_output_name
@@ -176,6 +191,8 @@ module Dk
       end
 
     end
+
+    DryTreeStub = Struct.new(:cmd_str, :input, :given_opts, :block)
 
   end
 

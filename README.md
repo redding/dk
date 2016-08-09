@@ -225,6 +225,28 @@ Use the `task` method to configure tasks that are runnable via the CLI.  This al
 
 **Note**: only tasks configured using this method will be runnable from the CLI.
 
+##### `stub_dry_tree_cmd`, `stub_dry_tree_ssh`
+
+```ruby
+require 'dk'
+
+Dk.configure do
+
+  stub_dry_tree_cmd("ls -la") do |spy| # spy is a Local::CmdSpy
+    spy.stdout = "..."
+  end
+
+  stub_dry_tree_ssh("ls -la") do |spy| # spy is a Remote::CmdSpy
+    spy.exitstatus = 1 # simulare the ssh call failing
+  end
+
+  # ...
+
+end
+```
+
+Use the `stub_dry_tree_cmd` and `stub_dry_tree_ssh` methods to add cmd and ssh stubs when using `--dry-run` or `--tree`. This can be used to control the stdout, stderr or exitstatus of a command. This is useful when a task uses the output of one command for another command or when the task does different logic depending on if a command succeeds or fails.
+
 ### Task
 
 #### Helper Methods
