@@ -13,6 +13,9 @@ module Dk
     include Dk::HasSetParam
     include Dk::HasSSHOpts
 
+    TASK_START_LOG_PREFIX  = '> '.freeze
+    INDENTATION_LOG_PREFIX = '    '.freeze
+
     attr_reader :params, :logger
 
     def initialize(opts = nil)
@@ -62,14 +65,15 @@ module Dk
       check_run_once_and_build_and_run_task(task_class, params)
     end
 
-    def log_info(msg);  self.logger.info(msg);  end # TODO: style up
-    def log_debug(msg); self.logger.debug(msg); end # TODO: style up
-    def log_error(msg); self.logger.error(msg); end # TODO: style up
+    def log_info(msg);  self.logger.info(log_msg(1, msg)); end
+    def log_debug(msg); self.logger.debug(log_msg(1, msg)); end
+    def log_error(msg); self.logger.error(log_msg(1, msg)); end
 
     def log_task_run(task_class, &run_block)
-      self.logger.info("> #{task_class} ...")
+      self.logger.info ""
+      self.logger.info "#{TASK_START_LOG_PREFIX}#{task_class} ..."
       time = Benchmark.realtime(&run_block)
-      self.logger.info("  ... #{task_class} (#{self.pretty_run_time(time)})")
+      self.logger.info "... #{task_class} (#{self.pretty_run_time(time)})"
     end
 
     def cmd(cmd_str, input, given_opts)
@@ -93,6 +97,10 @@ module Dk
     end
 
     private
+
+    def log_msg(indentation_level, msg)
+      "#{INDENTATION_LOG_PREFIX*indentation_level}#{msg}"
+    end
 
     def check_run_once_and_build_and_run_task(task_class, params = nil)
       if task_class.run_only_once && self.has_run_task?(task_class)

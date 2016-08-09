@@ -26,6 +26,11 @@ class Dk::Runner
       assert_includes Dk::HasSSHOpts, subject
     end
 
+    should "know its log prefix values" do
+      assert_equal '> ',     subject::TASK_START_LOG_PREFIX
+      assert_equal '    ',   subject::INDENTATION_LOG_PREFIX
+    end
+
   end
 
   class InitTests < UnitTests
@@ -165,13 +170,16 @@ class Dk::Runner
       msg = Factory.string
 
       subject.log_info msg
-      assert_equal [msg], logger_info_called_with
+      exp = ["#{INDENTATION_LOG_PREFIX}#{msg}"]
+      assert_equal exp, logger_info_called_with
 
       subject.log_debug msg
-      assert_equal [msg], logger_debug_called_with
+      exp = ["#{INDENTATION_LOG_PREFIX}#{msg}"]
+      assert_equal exp, logger_debug_called_with
 
       subject.log_error msg
-      assert_equal [msg], logger_error_called_with
+      exp = ["#{INDENTATION_LOG_PREFIX}#{msg}"]
+      assert_equal exp, logger_error_called_with
     end
 
     should "log the start/finish of task runs, including their run time" do
@@ -185,8 +193,9 @@ class Dk::Runner
       subject.log_task_run(task_class){}
 
       exp = [
-        ["> #{task_class} ..."],
-        ["  ... #{task_class} (#{pretty_run_time})"]
+        [""],
+        ["#{TASK_START_LOG_PREFIX}#{task_class} ..."],
+        ["... #{task_class} (#{pretty_run_time})"]
       ]
       assert_equal exp, logger_info_calls
     end
