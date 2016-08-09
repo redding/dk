@@ -68,7 +68,7 @@ module Dk::Remote
     subject{ @cmd }
 
     should have_readers :hosts, :ssh_args, :host_ssh_args, :cmd_str, :local_cmds
-    should have_imeths :to_s, :run, :success?, :output_lines
+    should have_imeths :to_s, :ssh_cmd_str, :run, :success?, :output_lines
 
     should "know its hosts" do
       assert_equal @hosts.sort, subject.hosts
@@ -105,18 +105,19 @@ module Dk::Remote
       assert_equal subject.cmd_str, subject.to_s
     end
 
+    should "build ssh cmd strs given a host" do
+      host = Factory.string
+      exp  = @remote_class.ssh_cmd_str(@cmd_str, host, @ssh_args, @host_ssh_args)
+      assert_equal exp, subject.ssh_cmd_str(host)
+    end
+
     should "build a local cmd for each of its hosts" do
       subject.hosts.each do |host|
         assert_instance_of Dk::Local::CmdSpy, subject.local_cmds[host]
-        exp = ssh_cmd_str(@cmd_str, host, subject.ssh_args, subject.host_ssh_args)
+        exp = subject.ssh_cmd_str(host)
         assert_equal exp, subject.local_cmds[host].cmd_str
       end
-      exp_cmd_str = ssh_cmd_str(
-        @cmd_str,
-        subject.hosts.last,
-        subject.ssh_args,
-        subject.host_ssh_args
-      )
+      exp_cmd_str = subject.ssh_cmd_str(subject.hosts.last)
       exp_opts = {
         :env          => @opts[:env],
         :dry_tree_run => @opts[:dry_tree_run]
@@ -126,15 +127,10 @@ module Dk::Remote
       cmd = @cmd_class.new(Dk::Local::Cmd, @cmd_str, @opts)
       cmd.hosts.each do |host|
         assert_instance_of Dk::Local::Cmd, cmd.local_cmds[host]
-        exp = ssh_cmd_str(@cmd_str, host, cmd.ssh_args, cmd.host_ssh_args)
+        exp = subject.ssh_cmd_str(host)
         assert_equal exp, cmd.local_cmds[host].cmd_str
       end
-      exp_cmd_str = ssh_cmd_str(
-        @cmd_str,
-        cmd.hosts.last,
-        cmd.ssh_args,
-        cmd.host_ssh_args
-      )
+      exp_cmd_str = subject.ssh_cmd_str(cmd.hosts.last)
       exp_opts = {
         :env          => @opts[:env],
         :dry_tree_run => @opts[:dry_tree_run]

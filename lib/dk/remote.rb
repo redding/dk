@@ -26,17 +26,19 @@ module Dk::Remote
       @cmd_str       = cmd_str
 
       @local_cmds = @hosts.inject({}) do |cmds, host|
-        cmds[host] = local_cmd_or_spy_klass.new(
-          ssh_cmd_str(@cmd_str, host, @ssh_args, @host_ssh_args),
-          { :env          => opts[:env],
-            :dry_tree_run => opts[:dry_tree_run]
-          }
-        )
+        cmds[host] = local_cmd_or_spy_klass.new(self.ssh_cmd_str(host), {
+          :env          => opts[:env],
+          :dry_tree_run => opts[:dry_tree_run]
+        })
         cmds
       end
     end
 
     def to_s; self.cmd_str; end
+
+    def ssh_cmd_str(host)
+      build_ssh_cmd_str(@cmd_str, host, @ssh_args, @host_ssh_args)
+    end
 
     def run(input = nil)
       self.hosts.each{ |host| @local_cmds[host].scmd.start(input) }
@@ -65,7 +67,7 @@ module Dk::Remote
     end
 
     # escape everything properly; run in sh to ensure full profile is loaded
-    def ssh_cmd_str(cmd_str, host, args, host_args)
+    def build_ssh_cmd_str(cmd_str, host, args, host_args)
       Dk::Remote.ssh_cmd_str(cmd_str, host, args, host_args)
     end
 
