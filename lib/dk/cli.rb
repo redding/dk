@@ -86,10 +86,6 @@ module Dk
     end
 
     def get_runner(config, opts)
-      if opts['dry-run'] || opts['tree']
-        ENV['SCMD_TEST_MODE'] = '1' # disable all local/remote cmds
-      end
-
       return Dk::DryRunner.new(config) if opts['dry-run']
 
       if opts['tree']

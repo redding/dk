@@ -116,14 +116,6 @@ module Dk::Local
       assert_equal [@cmd_str, { :env => opts[:env] }], @scmd_new_called_with
     end
 
-    should "build an Scmd::Command (to bypass test mode spying) if the dry/tree run option given" do
-      opts = { :dry_tree_run => true }
-      cmd  = @cmd_class.new(@cmd_str, opts)
-
-      exp = [@cmd_str, { :env => nil }]
-      assert_equal exp, @scmd_cmd_new_called_with
-    end
-
   end
 
   class CmdSpyTests < UnitTests

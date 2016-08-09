@@ -26,14 +26,12 @@ class Dk::CLI
     setup do
       @kernel_spy = KernelSpy.new
 
-      @scmd_test_mode = ENV['SCMD_TEST_MODE']
       Dk.reset
       ENV['DK_CONFIG'] = ROOT_PATH.join('test/support/config/tasks.rb').to_s
       @cli = Dk::CLI.new(@kernel_spy)
     end
     teardown do
       Dk.reset
-      ENV['SCMD_TEST_MODE'] = @scmd_test_mode
     end
     subject{ @cli }
 
@@ -61,10 +59,8 @@ class Dk::CLI
       @cli.run('cli-test-task', 'cli-other-task')
     end
 
-    should "build live runner, not disable scmd and run the named tasks and exit" do
+    should "build live runner and run the named tasks and exit" do
       assert_equal [Dk.config],     @runner_init_with
-      assert_equal @scmd_test_mode, ENV['SCMD_TEST_MODE']
-
       assert_equal 2, @runner_runs.size
       assert_equal [CLITestTask],  @runner_runs.first
       assert_equal [CLIOtherTask], @runner_runs.last
@@ -89,9 +85,8 @@ class Dk::CLI
       @cli.run('cli-test-task', '--dry-run')
     end
 
-    should "build dry runner, disable scmd and run the named task and exit" do
+    should "build dry runner and run the named task and exit" do
       assert_equal [Dk.config],   @runner_init_with
-      assert_equal '1',           ENV['SCMD_TEST_MODE']
       assert_equal [CLITestTask], @runner_run_with
 
       assert_equal 0, @kernel_spy.exit_status
@@ -114,9 +109,8 @@ class Dk::CLI
       @cli.run('cli-test-task', '--tree')
     end
 
-    should "build tree runner, disable scmd and run the named task and exit" do
+    should "build tree runner and run the named task and exit" do
       assert_equal [Dk.config, @kernel_spy], @runner_init_with
-      assert_equal '1',                      ENV['SCMD_TEST_MODE']
       assert_equal [CLITestTask],            @runner_run_with
 
       assert_equal 0, @kernel_spy.exit_status
