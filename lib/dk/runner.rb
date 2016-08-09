@@ -80,6 +80,13 @@ module Dk
       self.logger.info "#{TASK_END_LOG_PREFIX}#{task_class} (#{self.pretty_run_time(time)})"
     end
 
+    def log_cli_run(cli_argv)
+      15.times{ self.logger.debug "" }
+      self.logger.debug "===================================="
+      self.logger.debug ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> `#{cli_argv}`"
+      self.logger.debug "===================================="
+    end
+
     def cmd(cmd_str, input, given_opts)
       build_and_run_local_cmd(cmd_str, input, given_opts)
     end

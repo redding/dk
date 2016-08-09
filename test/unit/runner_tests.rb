@@ -53,7 +53,8 @@ class Dk::Runner
     should have_imeths :task_callbacks, :task_callback_task_classes
     should have_imeths :add_task_callback
     should have_imeths :run, :run_task
-    should have_imeths :log_info, :log_debug, :log_error, :log_task_run
+    should have_imeths :log_info, :log_debug, :log_error
+    should have_imeths :log_task_run, :log_cli_run
     should have_imeths :cmd, :ssh
     should have_imeths :has_run_task?, :pretty_run_time
 
@@ -203,6 +204,21 @@ class Dk::Runner
         ["#{TASK_END_LOG_PREFIX}#{task_class} (#{pretty_run_time})"]
       ]
       assert_equal exp, logger_info_calls
+    end
+
+    should "log the start of CLI runs" do
+      logger_debug_calls = []
+      Assert.stub(@args[:logger], :debug){ |*args| logger_debug_calls << args }
+
+      cli_argv = Factory.string
+      subject.log_cli_run(cli_argv)
+
+      exp = 15.times.map{ [""] } + [
+        ["===================================="],
+        [">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> `#{cli_argv}`"],
+        ["===================================="]
+      ]
+      assert_equal exp, logger_debug_calls
     end
 
     should "know if it has run a task or not" do

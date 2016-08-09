@@ -4,6 +4,7 @@ require 'dk/cli'
 require 'dk/config'
 require 'dk/dk_runner'
 require 'dk/dry_runner'
+require 'dk/null_logger'
 require 'dk/task'
 require 'dk/tree_runner'
 require 'dk/version'
@@ -29,6 +30,9 @@ class Dk::CLI
       Dk.reset
       ENV['DK_CONFIG'] = ROOT_PATH.join('test/support/config/tasks.rb').to_s
       @cli = Dk::CLI.new(@kernel_spy)
+
+      null_logger = Dk::NullLogger.new
+      Assert.stub(Dk.config, :dk_logger){ null_logger }
     end
     teardown do
       Dk.reset
@@ -47,20 +51,25 @@ class Dk::CLI
   class RunTests < InitTests
     desc "and run with a configured task name"
     setup do
-      @runner_init_with = nil
-      @runner_runs  = []
+      @runner_init_with         = nil
+      @log_cli_run_callbed_with = nil
+      @runner_runs              = []
       Assert.stub(Dk::DkRunner, :new) do |*args|
         @runner_init_with = args
 
         runner = Assert.stub_send(Dk::DkRunner, :new, *args)
         Assert.stub(runner, :run){ |*args| @runner_runs << args }
+        Assert.stub(runner, :log_cli_run){ |*args| @log_cli_run_callbed_with = args }
         runner
       end
-      @cli.run('cli-test-task', 'cli-other-task')
+      @cli_args = ['cli-test-task', 'cli-other-task']
+      @cli.run(*@cli_args)
     end
 
-    should "build live runner and run the named tasks and exit" do
-      assert_equal [Dk.config],     @runner_init_with
+    should "build a live runner, log the CLI args, run the named tasks and exit" do
+      assert_equal [Dk.config],           @runner_init_with
+      assert_equal [@cli_args.join(' ')], @log_cli_run_callbed_with
+
       assert_equal 2, @runner_runs.size
       assert_equal [CLITestTask],  @runner_runs.first
       assert_equal [CLIOtherTask], @runner_runs.last
