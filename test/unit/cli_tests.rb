@@ -201,14 +201,14 @@ class Dk::CLI
   end
 
   class RunWithUnknownTaskTests < InitTests
-    desc "and run with an unknown task"
+    desc "and run with an unknown task(s)"
     setup do
-      @task_name = Factory.string
-      @cli.run(@task_name)
+      @task_names = Factory.integer(3).times.map{ Factory.string }
+      @cli.run(*@task_names)
     end
 
     should "output to the user that the task is not known and exit" do
-      exp = "No task named #{@task_name.inspect}"
+      exp = "No task named #{@task_names.map(&:inspect).join(', ')}"
       assert_includes exp, @kernel_spy.output
       assert_equal 1, @kernel_spy.exit_status
     end

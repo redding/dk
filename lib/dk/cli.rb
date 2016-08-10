@@ -43,8 +43,8 @@ module Dk
       rescue CLIRB::VersionExit
         @kernel.puts Dk::VERSION
       rescue CLIRB::Error, Dk::Config::UnknownTaskError => exception
-        @kernel.puts "#{exception.message}\n\n"
         @kernel.puts help
+        @kernel.puts "\n\n#{exception.message}\n"
         @kernel.exit 1
       rescue StandardError => exception
         @kernel.puts "#{exception.class}: #{exception.message}"
@@ -61,6 +61,11 @@ module Dk
       raise ShowTaskList if @clirb.opts['list-tasks']
 
       @config.stdout_log_level('debug') if @clirb.opts['verbose']
+
+      unknowns = @clirb.args.select{ |name| !@config.tasks.keys.include?(name) }
+      if !unknowns.empty?
+        raise Dk::Config::UnknownTaskError, unknowns.map(&:inspect).join(', ')
+      end
 
       runner = get_runner(@config, @clirb.opts)
       runner.log_cli_run(args.join(' '))
