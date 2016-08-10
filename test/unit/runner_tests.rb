@@ -209,18 +209,27 @@ class Dk::Runner
     end
 
     should "log the start of CLI runs" do
-      logger_debug_calls = []
-      Assert.stub(@args[:logger], :debug){ |*args| logger_debug_calls << args }
+      logger_calls = []
+      Assert.stub(@args[:logger], :debug){ |*args| logger_calls << [:debug, *args] }
+      Assert.stub(@args[:logger], :info){ |*args| logger_calls << [:info, *args] }
+
+      pretty_run_time = Factory.string
+      Assert.stub(subject, :pretty_run_time){ pretty_run_time }
 
       cli_argv = Factory.string
-      subject.log_cli_run(cli_argv)
+      subject.log_cli_run(cli_argv){}
 
-      exp = 15.times.map{ [""] } + [
-        ["===================================="],
-        [">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> `#{cli_argv}`"],
-        ["===================================="]
+      exp = 15.times.map{ [:debug, ""] } + [
+        [:debug, "===================================="],
+        [:debug, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> `#{cli_argv}`"],
+        [:debug, "===================================="],
+        [:info,  ""],
+        [:info,  "(#{pretty_run_time})"],
+        [:debug, "===================================="],
+        [:debug, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< `#{cli_argv}`"],
+        [:debug, "===================================="]
       ]
-      assert_equal exp, logger_debug_calls
+      assert_equal exp, logger_calls
     end
 
     should "know if it has run a task or not" do

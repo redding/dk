@@ -22,11 +22,11 @@ module Dk
       end
 
       def dk_run
+        self.dk_run_callbacks 'before'
         @dk_runner.log_task_run(self.class) do
-          self.dk_run_callbacks 'before'
           catch(:halt){ self.run! }
-          self.dk_run_callbacks 'after'
         end
+        self.dk_run_callbacks 'after'
       end
 
       def run!

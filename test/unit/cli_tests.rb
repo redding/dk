@@ -59,7 +59,10 @@ class Dk::CLI
 
         runner = Assert.stub_send(Dk::DkRunner, :new, *args)
         Assert.stub(runner, :run){ |*args| @runner_runs << args }
-        Assert.stub(runner, :log_cli_run){ |*args| @log_cli_run_callbed_with = args }
+        Assert.stub(runner, :log_cli_run) do |*args, &block|
+          @log_cli_run_callbed_with = args
+          block.call
+        end
         runner
       end
       @cli_args = ['cli-test-task', 'cli-other-task']
