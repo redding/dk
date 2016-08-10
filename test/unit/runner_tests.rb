@@ -1,6 +1,7 @@
 require 'assert'
 require 'dk/runner'
 
+require 'dk/ansi'
 require 'dk/config'
 require 'dk/has_set_param'
 require 'dk/has_ssh_opts'
@@ -173,18 +174,19 @@ class Dk::Runner
       logger_error_called_with = nil
       Assert.stub(@args[:logger], :error){ |*args| logger_error_called_with = args }
 
-      msg = Factory.string
+      msg    = Factory.string
+      styles = [[], [:bold, :red]].sample
 
-      subject.log_info msg
-      exp = ["#{INDENT_LOG_PREFIX}#{msg}"]
+      subject.log_info msg, *styles
+      exp = ["#{INDENT_LOG_PREFIX}#{Dk::Ansi.styled_msg(msg, *styles)}"]
       assert_equal exp, logger_info_called_with
 
-      subject.log_debug msg
-      exp = ["#{INDENT_LOG_PREFIX}#{msg}"]
+      subject.log_debug msg, *styles
+      exp = ["#{INDENT_LOG_PREFIX}#{Dk::Ansi.styled_msg(msg, *styles)}"]
       assert_equal exp, logger_debug_called_with
 
-      subject.log_error msg
-      exp = ["#{INDENT_LOG_PREFIX}#{msg}"]
+      subject.log_error msg, *styles
+      exp = ["#{INDENT_LOG_PREFIX}#{Dk::Ansi.styled_msg(msg, *styles)}"]
       assert_equal exp, logger_error_called_with
     end
 
