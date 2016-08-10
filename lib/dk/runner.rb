@@ -116,8 +116,8 @@ module Dk
     end
 
     def pretty_run_time(raw_run_time)
-      if raw_run_time >= 1.0 # seconds
-        "#{raw_run_time / 60}:#{(raw_run_time % 60).to_s.rjust(2, '0')}s"
+      if raw_run_time >= 1.3 # seconds
+        "#{raw_run_time.to_i / 60}:#{(raw_run_time % 60).to_i.to_s.rjust(2, '0')}s"
       else
         "#{(raw_run_time * 1000 * 10.0).round / 10.0}ms"
       end

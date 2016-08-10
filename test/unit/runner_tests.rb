@@ -203,7 +203,8 @@ class Dk::Runner
       exp = [
         [""],
         ["#{TASK_START_LOG_PREFIX}#{task_class}"],
-        ["#{TASK_END_LOG_PREFIX}#{task_class} (#{pretty_run_time})"]
+        ["#{TASK_END_LOG_PREFIX}#{task_class} (#{pretty_run_time})"],
+        [""]
       ]
       assert_equal exp, logger_info_calls
     end
@@ -244,12 +245,12 @@ class Dk::Runner
     end
 
     should "know how to format raw run times and make them 'pretty'" do
-      run_time = Factory.float(1.0)
+      run_time = Factory.float(1.3)
       exp = "#{(run_time * 10_000).round / 10.0}ms"
       assert_equal exp, subject.pretty_run_time(run_time)
 
       run_time = Factory.float(10.0) + 1.0
-      exp = "#{run_time / 60}:#{(run_time % 60).to_s.rjust(2, '0')}s"
+      exp = "#{run_time.to_i / 60}:#{(run_time % 60).to_i.to_s.rjust(2, '0')}s"
       assert_equal exp, subject.pretty_run_time(run_time)
     end
 
