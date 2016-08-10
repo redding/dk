@@ -68,8 +68,9 @@ module Dk
       end
 
       runner = get_runner(@config, @clirb.opts)
-      runner.log_cli_run(args.join(' '))
-      @clirb.args.each{ |task_name| runner.run(@config.task(task_name)) }
+      runner.log_cli_run(args.join(' ')) do
+        @clirb.args.each{ |task_name| runner.run(@config.task(task_name)) }
+      end
     end
 
     def help

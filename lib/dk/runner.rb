@@ -89,10 +89,16 @@ module Dk
       self.logger.info "#{TASK_END_LOG_PREFIX}#{task_class} (#{self.pretty_run_time(time)})"
     end
 
-    def log_cli_run(cli_argv)
+    def log_cli_run(cli_argv, &run_block)
       15.times{ self.logger.debug "" }
       self.logger.debug "===================================="
       self.logger.debug ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> `#{cli_argv}`"
+      self.logger.debug "===================================="
+      time = Benchmark.realtime(&run_block)
+      self.logger.info ""
+      self.logger.info "(#{self.pretty_run_time(time)})"
+      self.logger.debug "===================================="
+      self.logger.debug "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< `#{cli_argv}`"
       self.logger.debug "===================================="
     end
 
