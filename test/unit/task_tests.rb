@@ -761,16 +761,17 @@ module Dk::Task
     end
 
     should "log by calling the runner's log methods" do
-      msg = Factory.string
+      msg    = Factory.string
+      styles = [[], [:bold, :red]].sample
 
-      subject.instance_eval{ log_info(msg) }
-      assert_equal [msg], @runner_log_info_called_with
+      subject.instance_eval{ log_info(msg, *styles) }
+      assert_equal [msg, *styles], @runner_log_info_called_with
 
-      subject.instance_eval{ log_debug(msg) }
-      assert_equal [msg], @runner_log_debug_called_with
+      subject.instance_eval{ log_debug(msg, *styles) }
+      assert_equal [msg, *styles], @runner_log_debug_called_with
 
-      subject.instance_eval{ log_error(msg) }
-      assert_equal [msg], @runner_log_error_called_with
+      subject.instance_eval{ log_error(msg, *styles) }
+      assert_equal [msg, *styles], @runner_log_error_called_with
     end
 
   end

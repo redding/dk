@@ -131,9 +131,9 @@ module Dk
         throw :halt
       end
 
-      def log_info(msg);  @dk_runner.log_info(msg);  end
-      def log_debug(msg); @dk_runner.log_debug(msg); end
-      def log_error(msg); @dk_runner.log_error(msg); end
+      def log_info(msg, *styles);  @dk_runner.log_info(msg, *styles);  end
+      def log_debug(msg, *styles); @dk_runner.log_debug(msg, *styles); end
+      def log_error(msg, *styles); @dk_runner.log_error(msg, *styles); end
 
       def dk_build_ssh_opts(opts)
         opts ||= {}
