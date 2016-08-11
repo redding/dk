@@ -190,9 +190,9 @@ class Dk::Runner
       assert_equal exp, logger_error_called_with
     end
 
-    should "log the start/finish of task runs, including their run time" do
-      logger_info_calls = []
-      Assert.stub(@args[:logger], :info){ |*args| logger_info_calls << args }
+    should "debug log the start/finish of task runs, including their run time" do
+      logger_debug_calls = []
+      Assert.stub(@args[:logger], :debug){ |*args| logger_debug_calls << args }
 
       pretty_run_time = Factory.string
       Assert.stub(subject, :pretty_run_time){ pretty_run_time }
@@ -201,9 +201,26 @@ class Dk::Runner
       subject.log_task_run(task_class){}
 
       exp = [
-        [""],
         ["#{TASK_START_LOG_PREFIX}#{task_class}"],
         ["#{TASK_END_LOG_PREFIX}#{task_class} (#{pretty_run_time})"],
+      ]
+      assert_equal exp, logger_debug_calls
+    end
+
+    should "log the start/finish of CLI task runs, including their run time" do
+      logger_info_calls = []
+      Assert.stub(@args[:logger], :info){ |*args| logger_info_calls << args }
+
+      pretty_run_time = Factory.string
+      Assert.stub(subject, :pretty_run_time){ pretty_run_time }
+
+      task_name = Factory.string
+      subject.log_cli_task_run(task_name){}
+
+      exp = [
+        ["Starting `#{task_name}`."],
+        ["`#{task_name}` finished in #{pretty_run_time}."],
+        [""],
         [""]
       ]
       assert_equal exp, logger_info_calls
@@ -224,7 +241,6 @@ class Dk::Runner
         [:debug, "===================================="],
         [:debug, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> `#{cli_argv}`"],
         [:debug, "===================================="],
-        [:info,  ""],
         [:info,  "(#{pretty_run_time})"],
         [:debug, "===================================="],
         [:debug, "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< `#{cli_argv}`"],

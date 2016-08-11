@@ -21,7 +21,7 @@ module Dk
     DEFAULT_SSH_HOSTS        = {}.freeze
     DEFAULT_SSH_ARGS         = ''.freeze
     DEFAULT_HOST_SSH_ARGS    = Hash.new{ |h, k| h[k] = DEFAULT_SSH_ARGS }
-    DEFAULT_TASKS            = Hash.new{ |h, k| raise UnknownTaskError.new(k.inspect) }.freeze
+    DEFAULT_TASKS            = Hash.new{ |h, k| raise UnknownTaskError.new("`#{k}`") }.freeze
     DEFAULT_LOG_PATTERN      = "%m\n".freeze
     DEFAULT_LOG_FILE_PATTERN = '[%d %-5l] : %m\n'.freeze
     DEFAULT_STDOUT_LOG_LEVEL = 'info'.freeze

@@ -51,16 +51,21 @@ class Dk::CLI
   class RunTests < InitTests
     desc "and run with a configured task name"
     setup do
-      @runner_init_with         = nil
-      @log_cli_run_callbed_with = nil
-      @runner_runs              = []
+      @runner_init_with        = nil
+      @log_cli_run_called_with = nil
+      @log_cli_task_runs       = []
+      @runner_runs             = []
       Assert.stub(Dk::DkRunner, :new) do |*args|
         @runner_init_with = args
 
         runner = Assert.stub_send(Dk::DkRunner, :new, *args)
         Assert.stub(runner, :run){ |*args| @runner_runs << args }
         Assert.stub(runner, :log_cli_run) do |*args, &block|
-          @log_cli_run_callbed_with = args
+          @log_cli_run_called_with = args
+          block.call
+        end
+        Assert.stub(runner, :log_cli_task_run) do |*args, &block|
+          @log_cli_task_runs << args
           block.call
         end
         runner
@@ -71,7 +76,11 @@ class Dk::CLI
 
     should "build a live runner, log the CLI args, run the named tasks and exit" do
       assert_equal [Dk.config],           @runner_init_with
-      assert_equal [@cli_args.join(' ')], @log_cli_run_callbed_with
+      assert_equal [@cli_args.join(' ')], @log_cli_run_called_with
+
+      assert_equal 2, @log_cli_task_runs.size
+      assert_equal [@cli_args.first], @log_cli_task_runs.first
+      assert_equal [@cli_args.last],  @log_cli_task_runs.last
 
       assert_equal 2, @runner_runs.size
       assert_equal [CLITestTask],  @runner_runs.first
@@ -211,7 +220,7 @@ class Dk::CLI
     end
 
     should "output to the user that the task is not known and exit" do
-      exp = "No task named #{@task_names.map(&:inspect).join(', ')}"
+      exp = "No task named #{@task_names.map{ |n| "`#{n}`"}.join(', ')}"
       assert_includes exp, @kernel_spy.output
       assert_equal 1, @kernel_spy.exit_status
     end

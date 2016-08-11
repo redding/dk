@@ -83,10 +83,16 @@ module Dk
     end
 
     def log_task_run(task_class, &run_block)
-      self.logger.info ""
-      self.logger.info "#{TASK_START_LOG_PREFIX}#{task_class}"
+      self.logger.debug "#{TASK_START_LOG_PREFIX}#{task_class}"
       time = Benchmark.realtime(&run_block)
-      self.logger.info "#{TASK_END_LOG_PREFIX}#{task_class} (#{self.pretty_run_time(time)})"
+      self.logger.debug "#{TASK_END_LOG_PREFIX}#{task_class} (#{self.pretty_run_time(time)})"
+    end
+
+    def log_cli_task_run(task_name, &run_block)
+      self.logger.info "Starting `#{task_name}`."
+      time = Benchmark.realtime(&run_block)
+      self.logger.info "`#{task_name}` finished in #{self.pretty_run_time(time)}."
+      self.logger.info ""
       self.logger.info ""
     end
 
@@ -96,7 +102,6 @@ module Dk
       self.logger.debug ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> `#{cli_argv}`"
       self.logger.debug "===================================="
       time = Benchmark.realtime(&run_block)
-      self.logger.info ""
       self.logger.info "(#{self.pretty_run_time(time)})"
       self.logger.debug "===================================="
       self.logger.debug "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< `#{cli_argv}`"
