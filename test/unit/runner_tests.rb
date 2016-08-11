@@ -28,8 +28,8 @@ class Dk::Runner
     end
 
     should "know its log prefix values" do
-      assert_equal '***** ', subject::TASK_START_LOG_PREFIX
-      assert_equal '..... ', subject::TASK_END_LOG_PREFIX
+      assert_equal ' >>>  ', subject::TASK_START_LOG_PREFIX
+      assert_equal ' <<<  ', subject::TASK_END_LOG_PREFIX
       assert_equal '      ', subject::INDENT_LOG_PREFIX
       assert_equal '[CMD] ', subject::CMD_LOG_PREFIX
       assert_equal '[SSH] ', subject::SSH_LOG_PREFIX
