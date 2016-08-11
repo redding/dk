@@ -46,6 +46,18 @@ module Dk::Remote
       self
     end
 
+    def stdout
+      self.hosts.inject('') do |out, host|
+        out.empty? ? @local_cmds[host].stdout.to_s : out
+      end
+    end
+
+    def stderr
+      self.hosts.inject('') do |err, host|
+        err.empty? ? @local_cmds[host].stderr.to_s : err
+      end
+    end
+
     def success?
       self.hosts.inject(true) do |success, host|
         success && @local_cmds[host].success?

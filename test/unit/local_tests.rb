@@ -50,8 +50,8 @@ module Dk::Local
     end
 
     should have_readers :scmd, :cmd_str
-    should have_imeths :to_s, :run, :stdout, :stderr, :success?
-    should have_imeths :output_lines
+    should have_imeths :to_s, :run
+    should have_imeths :stdout, :stderr, :success?, :output_lines
 
     should "build an scmd with the cmd str and any given :env option" do
       assert_equal @scmd_spy, subject.scmd

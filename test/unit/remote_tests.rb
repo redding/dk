@@ -68,7 +68,8 @@ module Dk::Remote
     subject{ @cmd }
 
     should have_readers :hosts, :ssh_args, :host_ssh_args, :cmd_str, :local_cmds
-    should have_imeths :to_s, :ssh_cmd_str, :run, :success?, :output_lines
+    should have_imeths :to_s, :ssh_cmd_str, :run
+    should have_imeths :stdout, :stderr, :success?, :output_lines
 
     should "know its hosts" do
       assert_equal @hosts.sort, subject.hosts
@@ -152,6 +153,16 @@ module Dk::Remote
         assert_true subject.local_cmds[host].scmd.wait_called?
         assert_equal input, subject.local_cmds[host].scmd.start_calls.last.input
       end
+    end
+
+    should "use the stdout/stderr of the first non-empty stdout/stderr" do
+      outs = subject.hosts.map{ |h| subject.local_cmds[h].stdout.to_s }
+      exp = outs.find{ |o| !o.empty? } || ''
+      assert_equal exp, subject.stdout
+
+      errs = subject.hosts.map{ |h| subject.local_cmds[h].stderr.to_s }
+      exp = errs.find{ |e| !e.empty? } || ''
+      assert_equal exp, subject.stderr
     end
 
     should "know whether it was successful or not" do
