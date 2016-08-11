@@ -64,12 +64,16 @@ module Dk
 
       unknowns = @clirb.args.select{ |name| !@config.tasks.keys.include?(name) }
       if !unknowns.empty?
-        raise Dk::Config::UnknownTaskError, unknowns.map(&:inspect).join(', ')
+        raise Dk::Config::UnknownTaskError, unknowns.map{ |u| "`#{u}`"}.join(', ')
       end
 
       runner = get_runner(@config, @clirb.opts)
       runner.log_cli_run(args.join(' ')) do
-        @clirb.args.each{ |task_name| runner.run(@config.task(task_name)) }
+        @clirb.args.each do |task_name|
+          runner.log_cli_task_run(task_name) do
+            runner.run(@config.task(task_name))
+          end
+        end
       end
     end
 
