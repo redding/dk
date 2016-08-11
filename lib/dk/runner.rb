@@ -14,8 +14,8 @@ module Dk
     include Dk::HasSetParam
     include Dk::HasSSHOpts
 
-    TASK_START_LOG_PREFIX  = '***** '.freeze
-    TASK_END_LOG_PREFIX    = '..... '.freeze
+    TASK_START_LOG_PREFIX  = ' >>>  '.freeze
+    TASK_END_LOG_PREFIX    = ' <<<  '.freeze
     INDENT_LOG_PREFIX      = '      '.freeze
     CMD_LOG_PREFIX         = '[CMD] '.freeze
     SSH_LOG_PREFIX         = '[SSH] '.freeze
