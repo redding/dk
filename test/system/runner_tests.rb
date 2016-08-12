@@ -81,12 +81,21 @@ class Dk::Runner
     setup do
       @runner = Dk::DryRunner.new(@dk_config)
 
+      stub_cmd_str = [
+        @params['stubbed_cmd_str'],
+        proc{ params['stubbed_cmd_str']}
+      ].sample
+
       # stub a cmd/ssh using `dry_tree_run` so we can test that the stub takes
       # precedence over the `dry_tree_run` opt
-      @runner.stub_cmd(@params['stubbed_cmd_str'], :dry_tree_run => true) do |s|
+      @runner.stub_cmd(stub_cmd_str, {
+        :opts => { :dry_tree_run => true }
+      }) do |s|
         s.stdout = Factory.string
       end
-      @runner.stub_ssh(@params['stubbed_cmd_str'], :dry_tree_run => true) do |s|
+      @runner.stub_ssh(stub_cmd_str, {
+        :opts => { :dry_tree_run => true }
+      }) do |s|
         s.stdout = Factory.string
       end
 
@@ -125,12 +134,21 @@ class Dk::Runner
     setup do
       @runner = Dk::TreeRunner.new(@dk_config, StringIO.new)
 
+      stub_cmd_str = [
+        @params['stubbed_cmd_str'],
+        proc{ params['stubbed_cmd_str']}
+      ].sample
+
       # stub a cmd/ssh using `dry_tree_run` so we can test that the stub takes
       # precedence over the `dry_tree_run` opt
-      @runner.stub_cmd(@params['stubbed_cmd_str'], :dry_tree_run => true) do |s|
+      @runner.stub_cmd(stub_cmd_str, {
+        :opts => { :dry_tree_run => true }
+      }) do |s|
         s.stdout = Factory.string
       end
-      @runner.stub_ssh(@params['stubbed_cmd_str'], :dry_tree_run => true) do |s|
+      @runner.stub_ssh(stub_cmd_str, {
+        :opts => { :dry_tree_run => true }
+      }) do |s|
         s.stdout = Factory.string
       end
 

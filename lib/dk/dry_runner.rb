@@ -11,10 +11,16 @@ module Dk
     def initialize(config, *args)
       super(config, *args)
       config.dry_tree_cmd_stubs.each do |s|
-        self.stub_cmd(s.cmd_str, s.input, s.given_opts, &s.block)
+        self.stub_cmd(s.cmd_str_proc, {
+          :input => s.input_proc,
+          :opts  => s.given_opts_proc
+        }, &s.block)
       end
       config.dry_tree_ssh_stubs.each do |s|
-        self.stub_ssh(s.cmd_str, s.input, s.given_opts, &s.block)
+        self.stub_ssh(s.cmd_str_proc, {
+          :input => s.input_proc,
+          :opts  => s.given_opts_proc
+        }, &s.block)
       end
     end
 
