@@ -2,6 +2,7 @@ require 'assert'
 require 'dk/task'
 
 require 'much-plugin'
+require 'dk'
 require 'dk/remote'
 require 'dk/runner'
 
@@ -601,9 +602,18 @@ module Dk::Task
       p = @runner.params.keys.first
       assert_equal @runner.params[p], subject.instance_eval{ params[p] }
 
-      assert_raises(ArgumentError) do
+      assert_raises(Dk::NoParamError) do
         subject.instance_eval{ params[Factory.string] }
       end
+    end
+
+    should "allow params access that doesn't error if the param is missing" do
+      p = @runner.params.keys.first
+      assert_equal @runner.params[p], subject.instance_eval{ params.try_param(p) }
+      assert_equal @runner.params[p], subject.instance_eval{ try_param(p) }
+
+      assert_nil subject.instance_eval{ params.try_param(Factory.string) }
+      assert_nil subject.instance_eval{ try_param(Factory.string) }
     end
 
     should "call to the runner for `set_param`" do
@@ -626,7 +636,7 @@ module Dk::Task
       p = @task_params.keys.first
       assert_equal @task_params[p], task_w_params.instance_eval{ params[p] }
 
-      assert_raises(ArgumentError) do
+      assert_raises(Dk::NoParamError) do
         task_w_params.instance_eval{ params[Factory.string] }
       end
     end
@@ -637,7 +647,7 @@ module Dk::Task
       subject.instance_eval{ params[p] = val }
 
       assert_equal val, subject.instance_eval{ params[p] }
-      assert_raises(ArgumentError){ @runner.params[p] }
+      assert_raises(Dk::NoParamError){ @runner.params[p] }
     end
 
     should "set a runner (and task) param using `set_param`" do

@@ -1,6 +1,7 @@
 require 'assert'
 require 'dk/runner'
 
+require 'dk'
 require 'dk/ansi'
 require 'dk/config'
 require 'dk/has_set_param'
@@ -83,7 +84,7 @@ class Dk::Runner
 
     should "use params that complain when accessing missing keys" do
       key = Factory.string
-      assert_raises(ArgumentError){ subject.params[key] }
+      assert_raises(Dk::NoParamError){ subject.params[key] }
 
       subject.params[key] = Factory.string
       assert_nothing_raised{ subject.params[key] }
@@ -265,7 +266,7 @@ class Dk::Runner
       exp = "#{(run_time * 10_000).round / 10.0}ms"
       assert_equal exp, subject.pretty_run_time(run_time)
 
-      run_time = Factory.float(10.0) + 1.0
+      run_time = Factory.float(10.0) + 1.3
       exp = "#{run_time.to_i / 60}:#{(run_time % 60).to_i.to_s.rjust(2, '0')}s"
       assert_equal exp, subject.pretty_run_time(run_time)
     end

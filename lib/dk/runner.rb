@@ -1,5 +1,6 @@
 require 'benchmark'
 require 'set'
+require 'dk'
 require 'dk/ansi'
 require 'dk/config'
 require 'dk/has_set_param'
@@ -25,7 +26,7 @@ module Dk
 
     def initialize(opts = nil)
       opts ||= {}
-      @params = Hash.new{ |h, k| raise ArgumentError, "no param named `#{k}`" }
+      @params = Hash.new{ |h, k| raise Dk::NoParamError, "no param named `#{k}`" }
       @params.merge!(dk_normalize_params(opts[:params]))
 
       d = Config::DEFAULT_CALLBACKS

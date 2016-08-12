@@ -253,7 +253,7 @@ Use the `stub_dry_tree_cmd` and `stub_dry_tree_ssh` methods to add cmd and ssh s
 
 The `Dk::Task` mixin provides a bunch of helper methods to make writing tasks easier and for commonizing common functions.
 
-##### `params`, `set_param`, `param?`
+##### `params`, `set_param`, `param?`, `try_param`
 
 ```ruby
 require 'dk/task'
@@ -262,13 +262,18 @@ class MyTask
   include Dk::Task
 
   def run!
-    params['some_param'] #=> "some value"
-    param?('some_param') #=> true
+    param?('some_param')    #=> true
+    params['some_param']    #=> "some value"
+    try_param('some_param') #=> "some value"
 
-    param?('some_other_param') #=> false
+    param?('some_other_param')    #=> false
+    params['some_other_param']    #=> Dk::NoParamError
+    try_param('some_other_param') #=> nil
+
     set_param('some_other_param', 'some other value')
-    params['some_other_param'] #=> "some other value"
-    param?('some_other_param') #=> true
+    param?('some_other_param')    #=> true
+    params['some_other_param']    #=> "some other value"
+    try_param('some_other_param') #=> "some other value"
   end
 
 end
@@ -279,6 +284,8 @@ Use the `param` helper to access named params that the task was run with.  Param
 Use the `set_param` method to set new global param values like you would on the main config.  Any subsequent tasks that are run will have these param values available to them.
 
 Use the `param?` method to check whether a specific param has been set.  Prefer this over `params.key?` as the task params have special logic for interacting with any runner params that makes the traditional `key?` method unreliable.
+
+By default, the params will raise an exception if you try and access a missing key (it will raise Dk::NoParamerror).  The idea is that Dk will loudly notify you if you are accessing a param you expect to be set and it is not set.  However, this may not be appropriate for every scenario, therefore you can use the `try_param` helper and it will just return `nil` if the param is not set.
 
 ##### `before`, `prepend_before`, `after`, `prepend_after`
 
