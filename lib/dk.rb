@@ -20,4 +20,6 @@ module Dk
     @config = Config.new
   end
 
+  NoticeError = Class.new(RuntimeError)
+
 end

@@ -46,8 +46,12 @@ module Dk
         @kernel.puts help
         @kernel.puts "\n\n#{exception.message}\n"
         @kernel.exit 1
+      rescue Dk::NoticeError => exception
+        @kernel.puts "\n\n#{exception.message}\n\n"
+        @kernel.puts exception.backtrace.first
+        @kernel.exit 1
       rescue StandardError => exception
-        @kernel.puts "#{exception.class}: #{exception.message}"
+        @kernel.puts "\n\n#{exception.class}: #{exception.message}"
         @kernel.puts exception.backtrace.join("\n")
         @kernel.exit 1
       end
