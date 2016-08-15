@@ -242,15 +242,48 @@ class Dk::CLI
 
   end
 
-  class RunWithAnErrorTests < InitTests
-    desc "and run with an error"
+  class RunWithNoticeErrorTests < InitTests
+    desc "and run with an error notification"
     setup do
-      Assert.stub(subject.clirb, :parse!){ raise StandardError, 'test' }
+      @exception = nil
+      Assert.stub(subject.clirb, :parse!) do
+        begin
+          raise Dk::NoticeError, Factory.string
+        rescue Dk::NoticeError => err
+          @exception = err
+          raise @exception
+        end
+      end
       @cli.run
     end
 
     should "output the error and exit" do
-      exp = "StandardError: test\n"
+      exp = "\n\n#{@exception.message}\n\n#{@exception.backtrace.first}\n"
+      assert_includes exp, @kernel_spy.output
+      assert_equal 1, @kernel_spy.exit_status
+    end
+
+  end
+
+  class RunWithAnErrorTests < InitTests
+    desc "and run with an error"
+    setup do
+      Assert.stub(subject.clirb, :parse!){ raise StandardError, 'test' }
+      @exception = nil
+      Assert.stub(subject.clirb, :parse!) do
+        begin
+          raise StandardError, Factory.string
+        rescue StandardError => err
+          @exception = err
+          raise @exception
+        end
+      end
+      @cli.run
+    end
+
+    should "output the error and exit" do
+      exp = "\n\nStandardError: #{@exception.message}\n" \
+            "#{@exception.backtrace.join("\n")}"
       assert_includes exp, @kernel_spy.output
       assert_equal 1, @kernel_spy.exit_status
     end
