@@ -34,8 +34,7 @@ class Dk::Runner
       assert_equal '      ', subject::INDENT_LOG_PREFIX
       assert_equal '[CMD] ', subject::CMD_LOG_PREFIX
       assert_equal '[SSH] ', subject::SSH_LOG_PREFIX
-
-      assert_equal "#{INDENT_LOG_PREFIX}> ", subject::CMD_SSH_OUT_LOG_PREFIX
+      assert_equal "> ",     subject::CMD_SSH_OUT_LOG_PREFIX
     end
 
   end
@@ -324,7 +323,7 @@ class Dk::Runner
     def exp_log_output(cmd)
       ( ["INFO -- #{CMD_LOG_PREFIX}#{cmd.cmd_str}\n"] +
         cmd.output_lines.map do |ol|
-          "DEBUG -- #{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}\n"
+          "DEBUG -- #{INDENT_LOG_PREFIX}#{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}\n"
         end
       ).join("")
     end
@@ -373,7 +372,7 @@ class Dk::Runner
         cmd.hosts.map{ |h| "INFO -- #{INDENT_LOG_PREFIX}[#{h}]\n" } +
         ["INFO -- #{INDENT_LOG_PREFIX}(#{@pretty_run_time})\n"] +
         cmd.output_lines.map do |ol|
-          "DEBUG -- #{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}\n"
+          "DEBUG -- #{INDENT_LOG_PREFIX}[#{ol.host}] #{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}\n"
         end
       ).join("")
     end

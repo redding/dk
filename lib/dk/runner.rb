@@ -20,7 +20,7 @@ module Dk
     INDENT_LOG_PREFIX      = '      '.freeze
     CMD_LOG_PREFIX         = '[CMD] '.freeze
     SSH_LOG_PREFIX         = '[SSH] '.freeze
-    CMD_SSH_OUT_LOG_PREFIX = "#{INDENT_LOG_PREFIX}> ".freeze
+    CMD_SSH_OUT_LOG_PREFIX = "> ".freeze
 
     attr_reader :params, :logger
 
@@ -165,7 +165,7 @@ module Dk
       self.logger.info("#{CMD_LOG_PREFIX}#{cmd.cmd_str}")
       block.call(cmd)
       cmd.output_lines.each do |output_line|
-        self.logger.debug("#{CMD_SSH_OUT_LOG_PREFIX}#{output_line.line}")
+        self.logger.debug("#{INDENT_LOG_PREFIX}#{CMD_SSH_OUT_LOG_PREFIX}#{output_line.line}")
       end
       cmd
     end
@@ -189,8 +189,9 @@ module Dk
       end
       time = Benchmark.realtime{ block.call(cmd) }
       self.logger.info("#{INDENT_LOG_PREFIX}(#{self.pretty_run_time(time)})")
-      cmd.output_lines.each do |output_line|
-        self.logger.debug("#{CMD_SSH_OUT_LOG_PREFIX}#{output_line.line}")
+      cmd.output_lines.each do |ol|
+        self.logger.debug "#{INDENT_LOG_PREFIX}[#{ol.host}] " \
+                          "#{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}"
       end
       cmd
     end
