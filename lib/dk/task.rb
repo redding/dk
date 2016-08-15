@@ -1,10 +1,18 @@
 require 'much-plugin'
+require 'dk'
 require 'dk/remote'
+require 'dk/runner'
 
 module Dk
 
   module Task
     include MuchPlugin
+
+    class ParamsHash < Hash
+      def try_param(key)
+        begin; self.[](key); rescue Dk::NoParamError; nil; end
+      end
+    end
 
     plugin_included do
       include InstanceMethods
@@ -17,7 +25,7 @@ module Dk
       def initialize(runner, params = nil)
         params ||= {}
         @dk_runner = runner
-        @dk_params = Hash.new{ |h, k| @dk_runner.params[k] }
+        @dk_params = ParamsHash.new{ |h, k| @dk_runner.params[k] }
         @dk_params.merge!(params)
       end
 
@@ -95,6 +103,10 @@ module Dk
 
       def param?(key)
         @dk_params.key?(key) || @dk_runner.params.key?(key)
+      end
+
+      def try_param(key)
+        @dk_params.try_param(key)
       end
 
       def before(subject, callback, params = nil)

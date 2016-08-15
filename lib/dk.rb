@@ -20,6 +20,7 @@ module Dk
     @config = Config.new
   end
 
-  NoticeError = Class.new(RuntimeError)
+  NoticeError  = Class.new(RuntimeError)
+  NoParamError = Class.new(ArgumentError)
 
 end
