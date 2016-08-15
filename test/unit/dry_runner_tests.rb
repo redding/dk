@@ -29,13 +29,15 @@ class Dk::DryRunner
     setup do
       @dk_config = Dk::Config.new
       Factory.integer(3).times.each do
-        @dk_config.stub_dry_tree_cmd(Factory.string, Factory.string, {
-          Factory.string => Factory.string
+        @dk_config.stub_dry_tree_cmd(Factory.string, {
+          :input => Factory.string,
+          :opts  => { Factory.string => Factory.string }
         }){ |s| Factory.string }
       end
       Factory.integer(3).times.each do
-        @dk_config.stub_dry_tree_ssh(Factory.string, Factory.string, {
-          Factory.string => Factory.string
+        @dk_config.stub_dry_tree_ssh(Factory.string, {
+          :input => Factory.string,
+          :opts  => { Factory.string => Factory.string }
         }){ |s| Factory.string }
       end
 
@@ -46,18 +48,18 @@ class Dk::DryRunner
     should "add cmd/ssh dry tree stubs from its config" do
       @dk_config.dry_tree_cmd_stubs.each do |stub|
         exp = Dk::HasTheStubs::Stub.new(
-          stub.cmd_str,
-          stub.input,
-          stub.given_opts,
+          stub.cmd_str_proc,
+          stub.input_proc,
+          stub.given_opts_proc,
           stub.block
         )
         assert_includes exp, @runner.local_cmd_stubs
       end
       @dk_config.dry_tree_ssh_stubs.each do |stub|
         exp = Dk::HasTheStubs::Stub.new(
-          stub.cmd_str,
-          stub.input,
-          stub.given_opts,
+          stub.cmd_str_proc,
+          stub.input_proc,
+          stub.given_opts_proc,
           stub.block
         )
         assert_includes exp, @runner.remote_cmd_stubs

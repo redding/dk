@@ -41,210 +41,108 @@ module Dk::HasTheStubs
   class InitTests < MixinTests
     desc "when init"
     setup do
-      @cmd_str   = Factory.string
-      @cmd_input = Factory.string
-      @cmd_opts  = { Factory.string => Factory.string }
+      raw_cmd_str    = Factory.string
+      raw_input      = Factory.string
+      raw_given_opts = { Factory.string => Factory.string }
 
-      @given_ssh_opts = Factory.ssh_cmd_opts
-      @ssh_opts       = { :hosts => Factory.hosts }
-
+      @cmd_str    = [raw_cmd_str, proc{ "#{raw_cmd_str},#{some_attr}" }].sample
+      @input      = [raw_input,   proc{ "#{raw_input},#{some_attr}" }].sample
+      @given_opts = [
+        raw_given_opts,
+        proc{ raw_given_opts.merge('some_attr' => some_attr) }
+      ].sample
+      @ssh_opts   = { :hosts => Factory.hosts }
       @stub_block = Proc.new{ |s| Factory.string }
 
-      @instance = @class.new
+      task_class = Class.new{ def some_attr; @some_attr ||= Factory.string; end }
+      @task      = task_class.new
+      @instance  = @class.new
     end
     subject{ @instance }
 
-    should have_imeths :stub_cmd, :unstub_cmd, :unstub_all_cmds, :local_cmd_stubs
-    should have_imeths :stub_ssh, :unstub_ssh, :unstub_all_ssh, :remote_cmd_stubs
+    should have_imeths :local_cmd_stubs, :stub_cmd, :unstub_all_cmds
+    should have_imeths :remote_cmd_stubs, :stub_ssh, :unstub_all_ssh
 
     should "allow stubbing cmds" do
-      assert_equal 0, subject.instance_eval{ local_cmd_stub_blocks.size }
+      assert_equal 0, subject.local_cmd_stubs.size
+
+      cmd_str    = get_raw_value(@cmd_str)
+      input      = get_raw_value(@input)
+      given_opts = get_raw_value(@given_opts)
 
       subject.stub_cmd(@cmd_str, &@stub_block)
-      assert_equal 1, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
+      assert_equal 1, subject.local_cmd_stubs.size
+      assert_equal @stub_block, lookup_cmd_stub_block(cmd_str, nil, nil)
 
-      subject.stub_cmd(@cmd_str, @cmd_input, &@stub_block)
-      assert_equal 2, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
+      subject.stub_cmd(@cmd_str, :input => @input, &@stub_block)
+      assert_equal 2, subject.local_cmd_stubs.size
+      assert_equal @stub_block, lookup_cmd_stub_block(cmd_str, input, nil)
 
-      subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
-      assert_equal 3, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
+      subject.stub_cmd(@cmd_str, :opts => @given_opts, &@stub_block)
+      assert_equal 3, subject.local_cmd_stubs.size
+      assert_equal @stub_block, lookup_cmd_stub_block(cmd_str, nil, given_opts)
 
-      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
-      assert_equal 4, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
-    end
-
-    should "allow unstubbing cmds" do
-      subject.stub_cmd(@cmd_str, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_input, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
-
-      assert_equal 4, subject.instance_eval{ local_cmd_stub_blocks.size }
-
-      subject.unstub_cmd(@cmd_str)
-      assert_equal 3, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-
-      subject.unstub_cmd(@cmd_str, @cmd_input)
-      assert_equal 2, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-
-      subject.unstub_cmd(@cmd_str, @cmd_opts)
-      assert_equal 1, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-
-      subject.unstub_cmd(@cmd_str, @cmd_input, @cmd_opts)
-      assert_equal 0, subject.instance_eval{ local_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, @cmd_opts]
-      spy_block = subject.instance_eval{ local_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-    end
-
-    should "not error unstubbing cmds that aren't stubbed" do
-      assert_nothing_raised{ subject.unstub_cmd(@cmd_str) }
-      assert_nothing_raised{ subject.unstub_cmd(@cmd_str, @cmd_input) }
-      assert_nothing_raised{ subject.unstub_cmd(@cmd_str, @cmd_opts) }
-      assert_nothing_raised{ subject.unstub_cmd(@cmd_str, @cmd_input, @cmd_opts) }
+      subject.stub_cmd(@cmd_str, {
+        :input => @input,
+        :opts  => @given_opts
+      }, &@stub_block)
+      assert_equal 4, subject.local_cmd_stubs.size
+      assert_equal @stub_block, lookup_cmd_stub_block(cmd_str, input, given_opts)
     end
 
     should "allow unstubbing all cmds" do
       subject.stub_cmd(@cmd_str, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_input, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
+      subject.stub_cmd(@cmd_str, :input => @input, &@stub_block)
+      subject.stub_cmd(@cmd_str, :opts  => @given_opts, &@stub_block)
+      subject.stub_cmd(@cmd_str, {
+        :input => @input,
+        :opts  => @given_opts
+      }, &@stub_block)
 
-      assert_equal 4, subject.instance_eval{ local_cmd_stub_blocks.size }
+      assert_equal 4, subject.local_cmd_stubs.size
       subject.unstub_all_cmds
-      assert_equal 0, subject.instance_eval{ local_cmd_stub_blocks.size }
-    end
-
-    should "know its local cmd stubs" do
-      subject.stub_cmd(@cmd_str, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_input, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_opts, &@stub_block)
-      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
-
-      exp = Stub.new(@cmd_str, nil, nil, @stub_block)
-      assert_includes exp, subject.local_cmd_stubs
-      exp = Stub.new(@cmd_str, @cmd_input, nil, @stub_block)
-      assert_includes exp, subject.local_cmd_stubs
-      exp = Stub.new(@cmd_str, nil, @cmd_opts, @stub_block)
-      assert_includes exp, subject.local_cmd_stubs
-      exp = Stub.new(@cmd_str, @cmd_input, @cmd_opts, @stub_block)
-      assert_includes exp, subject.local_cmd_stubs
+      assert_equal 0, subject.local_cmd_stubs.size
     end
 
     should "allow stubbing ssh" do
-      assert_equal 0, subject.instance_eval{ remote_cmd_stub_blocks.size }
+      assert_equal 0, subject.remote_cmd_stubs.size
+
+      cmd_str    = get_raw_value(@cmd_str)
+      input      = get_raw_value(@input)
+      given_opts = get_raw_value(@given_opts)
 
       subject.stub_ssh(@cmd_str, &@stub_block)
-      assert_equal 1, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
+      assert_equal 1, subject.remote_cmd_stubs.size
+      assert_equal @stub_block, lookup_ssh_stub_block(cmd_str, nil, nil)
 
-      subject.stub_ssh(@cmd_str, @cmd_input, &@stub_block)
-      assert_equal 2, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
+      subject.stub_ssh(@cmd_str, :input => @input, &@stub_block)
+      assert_equal 2, subject.remote_cmd_stubs.size
+      assert_equal @stub_block, lookup_ssh_stub_block(cmd_str, input, nil)
 
-      subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
-      assert_equal 3, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
+      subject.stub_ssh(@cmd_str, :opts => @given_opts, &@stub_block)
+      assert_equal 3, subject.remote_cmd_stubs.size
+      assert_equal @stub_block, lookup_ssh_stub_block(cmd_str, nil, given_opts)
 
-      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
-      assert_equal 4, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_same @stub_block, spy_block
-    end
-
-    should "allow unstubbing ssh" do
-      subject.stub_ssh(@cmd_str, &@stub_block)
-      subject.stub_ssh(@cmd_str, @cmd_input, &@stub_block)
-      subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
-      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
-
-      assert_equal 4, subject.instance_eval{ remote_cmd_stub_blocks.size }
-
-      subject.unstub_ssh(@cmd_str)
-      assert_equal 3, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, nil]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-
-      subject.unstub_ssh(@cmd_str, @cmd_input)
-      assert_equal 2, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, nil]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-
-      subject.unstub_ssh(@cmd_str, @given_ssh_opts)
-      assert_equal 1, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, nil, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-
-      subject.unstub_ssh(@cmd_str, @cmd_input, @given_ssh_opts)
-      assert_equal 0, subject.instance_eval{ remote_cmd_stub_blocks.size }
-      exp_key   = [@cmd_str, @cmd_input, @given_ssh_opts]
-      spy_block = subject.instance_eval{ remote_cmd_stub_blocks[exp_key] }
-      assert_nil spy_block
-    end
-
-    should "not error unstubbing ssh that aren't stubbed" do
-      assert_nothing_raised{ subject.unstub_ssh(@cmd_str) }
-      assert_nothing_raised{ subject.unstub_ssh(@cmd_str, @cmd_input) }
-      assert_nothing_raised{ subject.unstub_ssh(@cmd_str, @given_ssh_opts) }
-      assert_nothing_raised{ subject.unstub_ssh(@cmd_str, @cmd_input, @given_ssh_opts) }
+      subject.stub_ssh(@cmd_str, {
+        :input => @input,
+        :opts  => @given_opts
+      }, &@stub_block)
+      assert_equal 4, subject.remote_cmd_stubs.size
+      assert_equal @stub_block, lookup_ssh_stub_block(cmd_str, input, given_opts)
     end
 
     should "allow unstubbing all ssh" do
       subject.stub_ssh(@cmd_str, &@stub_block)
-      subject.stub_ssh(@cmd_str, @cmd_input, &@stub_block)
-      subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
-      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
+      subject.stub_ssh(@cmd_str, :input => @input, &@stub_block)
+      subject.stub_ssh(@cmd_str, :opts  => @given_opts, &@stub_block)
+      subject.stub_ssh(@cmd_str, {
+        :input => @input,
+        :opts  => @given_opts
+      }, &@stub_block)
 
-      assert_equal 4, subject.instance_eval{ remote_cmd_stub_blocks.size }
+      assert_equal 4, subject.remote_cmd_stubs.size
       subject.unstub_all_ssh
-      assert_equal 0, subject.instance_eval{ remote_cmd_stub_blocks.size }
-    end
-
-    should "know its remote cmd stubs" do
-      subject.stub_ssh(@cmd_str, &@stub_block)
-      subject.stub_ssh(@cmd_str, @cmd_input, &@stub_block)
-      subject.stub_ssh(@cmd_str, @given_ssh_opts, &@stub_block)
-      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
-
-      exp = Stub.new(@cmd_str, nil, nil, @stub_block)
-      assert_includes exp, subject.remote_cmd_stubs
-      exp = Stub.new(@cmd_str, @cmd_input, nil, @stub_block)
-      assert_includes exp, subject.remote_cmd_stubs
-      exp = Stub.new(@cmd_str, nil, @given_ssh_opts, @stub_block)
-      assert_includes exp, subject.remote_cmd_stubs
-      exp = Stub.new(@cmd_str, @cmd_input, @given_ssh_opts, @stub_block)
-      assert_includes exp, subject.remote_cmd_stubs
+      assert_equal 0, subject.remote_cmd_stubs.size
     end
 
     # test the `Runner` interface that this overwrites, these are private
@@ -252,109 +150,125 @@ module Dk::HasTheStubs
     # them as if they were public methods
 
     should "use stubs with `build_local_cmd`" do
-      cmd_str, cmd_input, cmd_opts = @cmd_str, @cmd_input, @cmd_opts
+      task       = @task
+      cmd_str    = get_raw_value(@cmd_str)
+      input      = get_raw_value(@input)
+      given_opts = get_raw_value(@given_opts)
 
       subject.stub_cmd(@cmd_str){ |s| s.exitstatus = 1 }
-      spy = subject.instance_eval{ build_local_cmd(cmd_str, nil, nil) }
+      spy = subject.instance_eval do
+        build_local_cmd(task, cmd_str, nil, nil)
+      end
       assert_false spy.success?
 
       subject.unstub_all_cmds
-      subject.stub_cmd(@cmd_str, @cmd_input){ |s| s.exitstatus = 1 }
-      spy = subject.instance_eval{ build_local_cmd(cmd_str, cmd_input, nil) }
+      subject.stub_cmd(@cmd_str, :input => @input){ |s| s.exitstatus = 1 }
+      spy = subject.instance_eval do
+        build_local_cmd(task, cmd_str, input, nil)
+      end
       assert_false spy.success?
 
       subject.unstub_all_cmds
-      subject.stub_cmd(@cmd_str, @cmd_opts){ |s| s.exitstatus = 1 }
-      spy = subject.instance_eval{ build_local_cmd(cmd_str, nil, cmd_opts) }
+      subject.stub_cmd(@cmd_str, :opts => @given_opts){ |s| s.exitstatus = 1 }
+      spy = subject.instance_eval do
+        build_local_cmd(task, cmd_str, nil, given_opts)
+      end
       assert_false spy.success?
 
       subject.unstub_all_cmds
-      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts){ |s| s.exitstatus = 1 }
-      spy = subject.instance_eval{ build_local_cmd(cmd_str, cmd_input, cmd_opts) }
+      subject.stub_cmd(@cmd_str, {
+        :input => @input,
+        :opts  => @given_opts
+      }){ |s| s.exitstatus = 1 }
+      spy = subject.instance_eval do
+        build_local_cmd(task, cmd_str, input, given_opts)
+      end
       assert_false spy.success?
     end
 
-    should "cache stubbed local cmd spies using `build_local_cmd`" do
-      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
+    should "defer to `has_the_stubs_build_local_cmd` when cmd isn't stubbed" do
+      task       = @task
+      cmd_str    = get_raw_value(@cmd_str)
+      input      = get_raw_value(@input)
+      given_opts = get_raw_value(@given_opts)
 
-      cmd_str, cmd_input, cmd_opts = @cmd_str, @cmd_input, @cmd_opts
-      spy    = subject.instance_eval{ build_local_cmd(cmd_str, cmd_input, cmd_opts) }
-      result = subject.instance_eval{ build_local_cmd(cmd_str, cmd_input, cmd_opts) }
-      assert_same spy, result
-    end
-
-    should "remove cached stubbed local cmd spies when unstubbing" do
-      subject.stub_cmd(@cmd_str, @cmd_input, @cmd_opts, &@stub_block)
-      cmd_str, cmd_input, cmd_opts = @cmd_str, @cmd_input, @cmd_opts
-      spy = subject.instance_eval{ build_local_cmd(cmd_str, cmd_input, cmd_opts) }
-
-      subject.unstub_all_cmds
-      result = subject.instance_eval{ build_local_cmd(cmd_str, cmd_input, cmd_opts) }
-      assert_not_same spy, result
+      result = subject.instance_eval do
+        build_local_cmd(task, cmd_str, input, given_opts)
+      end
+      assert_equal BuiltCmd.new(cmd_str, given_opts), result
     end
 
     should "use stubs with `build_remote_cmd`" do
-      cmd_str, cmd_input, given_opts, ssh_opts = @cmd_str, @cmd_input, @given_ssh_opts, @ssh_opts
+      task       = @task
+      cmd_str    = get_raw_value(@cmd_str)
+      input      = get_raw_value(@input)
+      given_opts = get_raw_value(@given_opts)
+      ssh_opts   = @ssh_opts
 
       subject.stub_ssh(@cmd_str){ |s| s.exitstatus = 1 }
-      spy = subject.instance_eval{ build_remote_cmd(cmd_str, nil, nil, ssh_opts) }
-      assert_false spy.success?
-
-      subject.unstub_all_ssh
-      subject.stub_ssh(@cmd_str, @cmd_input){ |s| s.exitstatus = 1 }
       spy = subject.instance_eval do
-        build_remote_cmd(cmd_str, cmd_input, nil, ssh_opts)
+        build_remote_cmd(task, cmd_str, nil, nil, ssh_opts)
       end
       assert_false spy.success?
 
       subject.unstub_all_ssh
-      subject.stub_ssh(@cmd_str, @given_ssh_opts){ |s| s.exitstatus = 1 }
+      subject.stub_ssh(@cmd_str, :input => @input){ |s| s.exitstatus = 1 }
       spy = subject.instance_eval do
-        build_remote_cmd(cmd_str, nil, given_opts, ssh_opts)
+        build_remote_cmd(task, cmd_str, input, nil, ssh_opts)
       end
       assert_false spy.success?
 
       subject.unstub_all_ssh
-      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts){ |s| s.exitstatus = 1 }
+      subject.stub_ssh(@cmd_str, :opts => @given_opts){ |s| s.exitstatus = 1 }
       spy = subject.instance_eval do
-        build_remote_cmd(cmd_str, cmd_input, given_opts, ssh_opts)
+        build_remote_cmd(task, cmd_str, nil, given_opts, ssh_opts)
       end
       assert_false spy.success?
-    end
-
-    should "cache stubbed remote cmd spies using `build_remote_cmd`" do
-      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
-
-      cmd_str, cmd_input, given_opts, ssh_opts = @cmd_str, @cmd_input, @given_ssh_opts, @ssh_opts
-      spy = subject.instance_eval do
-        build_remote_cmd(cmd_str, cmd_input, given_opts, ssh_opts)
-      end
-      result = subject.instance_eval do
-        build_remote_cmd(cmd_str, cmd_input, given_opts, ssh_opts)
-      end
-      assert_same spy, result
-    end
-
-    should "remove cached stubbed ssh spies when unstubbing" do
-      subject.stub_ssh(@cmd_str, @cmd_input, @given_ssh_opts, &@stub_block)
-      cmd_str, cmd_input, given_opts, ssh_opts = @cmd_str, @cmd_input, @given_ssh_opts, @ssh_opts
-      spy = subject.instance_eval do
-        build_remote_cmd(cmd_str, cmd_input, given_opts, ssh_opts)
-      end
 
       subject.unstub_all_ssh
-      result = subject.instance_eval do
-        build_remote_cmd(cmd_str, cmd_input, given_opts, ssh_opts)
+      subject.stub_ssh(@cmd_str, {
+        :input => @input,
+        :opts  => @given_opts
+      }){ |s| s.exitstatus = 1 }
+      spy = subject.instance_eval do
+        build_remote_cmd(task, cmd_str, input, given_opts, ssh_opts)
       end
-      assert_not_same spy, result
+      assert_false spy.success?
     end
 
     should "defer to `has_the_stubs_build_remote_cmd` when cmd isn't stubbed" do
-      cmd_str, cmd_input, given_opts, ssh_opts = @cmd_str, @cmd_input, @given_ssh_opts, @ssh_opts
+      task       = @task
+      cmd_str    = get_raw_value(@cmd_str)
+      input      = get_raw_value(@input)
+      given_opts = get_raw_value(@given_opts)
+      ssh_opts   = @ssh_opts
+
       result = subject.instance_eval do
-        build_remote_cmd(cmd_str, cmd_input, given_opts, ssh_opts)
+        build_remote_cmd(task, cmd_str, input, given_opts, ssh_opts)
       end
       assert_equal BuiltCmd.new(cmd_str, ssh_opts), result
+    end
+
+    private
+
+    def get_raw_value(value)
+      value.kind_of?(::Proc) ? @task.instance_eval(&value) : value
+    end
+
+    def lookup_cmd_stub_block(cmd_str, input, given_opts)
+      instance = subject
+      task     = @task
+      subject.instance_eval do
+        find_cmd_ssh_stub_block(instance.local_cmd_stubs, task, cmd_str, input, given_opts)
+      end
+    end
+
+    def lookup_ssh_stub_block(cmd_str, input, given_opts)
+      instance = subject
+      task     = @task
+      subject.instance_eval do
+        find_cmd_ssh_stub_block(instance.remote_cmd_stubs, task, cmd_str, input, given_opts)
+      end
     end
 
   end

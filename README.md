@@ -605,14 +605,31 @@ test "my task should do something" do
   runner.stub_cmd("ls -la") do |spy| # spy is a Local::CmdSpy
     spy.stdout = "..."
   end
-  runner.stub_ssh("ls -la") do |spy| # spy is a Remote::CmdSpy
+  runner.stub_ssh("ls -la", :input => 'whatever') do |spy| # spy is a Remote::CmdSpy
     spy.exitstatus = 1 # simulare the ssh call failing
   end
 
-  runner.run
+  # ....
+end
+```
 
-  # make assertions about how your task used the stdout of the
-  # cmd and handled the ssh call that failed
+You can even stub with procs.  Those procs will be instance eval'd against the task to determine if the stub is a match.  This allows you to stub the same way the call is made in the task (which is handy when the cmds are driven by dynamic values on the task instance).
+
+```ruby
+# in your test file or whatever
+
+include Dk::Task::TestHelpers
+
+test "my task should do something" do
+  runner = test_runner(MyTask)
+  runner.stub_cmd(proc{ self.class.some_cmd_str }, :opts => proc{ some_opts }) do |spy| # spy is a Local::CmdSpy
+    spy.stdout = "..."
+  end
+  runner.stub_ssh("ls -la", :input => proc{ some_task_input_val }) do |spy| # spy is a Remote::CmdSpy
+    spy.exitstatus = 1 # simulare the ssh call failing
+  end
+
+  # ....
 end
 ```
 

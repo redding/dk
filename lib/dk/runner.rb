@@ -108,12 +108,12 @@ module Dk
       self.logger.debug "===================================="
     end
 
-    def cmd(cmd_str, input, given_opts)
-      build_and_run_local_cmd(cmd_str, input, given_opts)
+    def cmd(task, cmd_str, input, given_opts)
+      build_and_run_local_cmd(task, cmd_str, input, given_opts)
     end
 
-    def ssh(cmd_str, input, given_opts, ssh_opts)
-      build_and_run_remote_cmd(cmd_str, input, given_opts, ssh_opts)
+    def ssh(task, cmd_str, input, given_opts, ssh_opts)
+      build_and_run_remote_cmd(task, cmd_str, input, given_opts, ssh_opts)
     end
 
     def has_run_task?(task_class)
@@ -149,14 +149,14 @@ module Dk
       task_class.new(self, params)
     end
 
-    def build_and_run_local_cmd(cmd_str, input, given_opts)
-      local_cmd = build_local_cmd(cmd_str, input, given_opts)
+    def build_and_run_local_cmd(task, cmd_str, input, given_opts)
+      local_cmd = build_local_cmd(task, cmd_str, input, given_opts)
       log_local_cmd(local_cmd){ |cmd| cmd.run(input) }
     end
 
     # input is needed for the `TestRunner` so it can use it with stubbing
     # otherwise it is ignored when building a local cmd
-    def build_local_cmd(cmd_str, input, given_opts)
+    def build_local_cmd(task, cmd_str, input, given_opts)
       Local::Cmd.new(cmd_str, given_opts)
     end
 
@@ -169,14 +169,14 @@ module Dk
       cmd
     end
 
-    def build_and_run_remote_cmd(cmd_str, input, given_opts, ssh_opts)
-      remote_cmd = build_remote_cmd(cmd_str, input, given_opts, ssh_opts)
+    def build_and_run_remote_cmd(task, cmd_str, input, given_opts, ssh_opts)
+      remote_cmd = build_remote_cmd(task, cmd_str, input, given_opts, ssh_opts)
       log_remote_cmd(remote_cmd){ |cmd| cmd.run(input) }
     end
 
     # input and given opts are needed for the `TestRunner` so it can use it with
     # stubbing otherwise they are ignored when building a remote cmd
-    def build_remote_cmd(cmd_str, input, given_opts, ssh_opts)
+    def build_remote_cmd(task, cmd_str, input, given_opts, ssh_opts)
       Remote::Cmd.new(cmd_str, ssh_opts)
     end
 

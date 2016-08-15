@@ -134,16 +134,28 @@ module Dk
       @log_file_pattern
     end
 
-    def stub_dry_tree_cmd(cmd_str, *args, &block)
-      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
-      input      = args.last
-      @dry_tree_cmd_stubs << DryTreeStub.new(cmd_str, input, given_opts, block)
+    def stub_dry_tree_cmd(cmd_str, args = nil, &block)
+      args ||= {}
+
+      cmd_str_proc    = get_cmd_ssh_proc(cmd_str)
+      input_proc      = get_cmd_ssh_proc(args[:input])
+      given_opts_proc = get_cmd_ssh_proc(args[:opts])
+
+      @dry_tree_cmd_stubs.unshift(
+        DryTreeStub.new(cmd_str_proc, input_proc, given_opts_proc, block)
+      )
     end
 
-    def stub_dry_tree_ssh(cmd_str, *args, &block)
-      given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
-      input      = args.last
-      @dry_tree_ssh_stubs << DryTreeStub.new(cmd_str, input, given_opts, block)
+    def stub_dry_tree_ssh(cmd_str, args = nil, &block)
+      args ||= {}
+
+      cmd_str_proc    = get_cmd_ssh_proc(cmd_str)
+      input_proc      = get_cmd_ssh_proc(args[:input])
+      given_opts_proc = get_cmd_ssh_proc(args[:opts])
+
+      @dry_tree_ssh_stubs.unshift(
+        DryTreeStub.new(cmd_str_proc, input_proc, given_opts_proc, block)
+      )
     end
 
     # private - intended for internal use only
@@ -161,6 +173,14 @@ module Dk
     def dk_logger
       @dk_logger ||= LogslyLogger.new(self)
     end
+
+    private
+
+    def get_cmd_ssh_proc(obj)
+      obj.kind_of?(::Proc) ? obj : proc{ obj }
+    end
+
+    DryTreeStub = Struct.new(:cmd_str_proc, :input_proc, :given_opts_proc, :block)
 
     class LogslyLogger
       include Logsly
@@ -191,8 +211,6 @@ module Dk
       end
 
     end
-
-    DryTreeStub = Struct.new(:cmd_str, :input, :given_opts, :block)
 
   end
 

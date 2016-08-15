@@ -301,11 +301,12 @@ class Dk::Runner
         end
       end
 
+      @task   = Factory.string
       @runner = @runner_class.new(@runner_opts)
     end
 
     should "build, log and run local cmds" do
-      @runner.cmd(@cmd_str, @cmd_input, @cmd_given_opts)
+      @runner.cmd(@task, @cmd_str, @cmd_input, @cmd_given_opts)
 
       exp = [@cmd_str, @cmd_given_opts]
       assert_equal exp, @local_cmd_new_called_with
@@ -343,6 +344,7 @@ class Dk::Runner
         end
       end
 
+      @task   = Factory.string
       @runner = @runner_class.new(@runner_opts)
 
       @pretty_run_time = Factory.string
@@ -350,7 +352,7 @@ class Dk::Runner
     end
 
     should "build, log and run remote cmds" do
-      @runner.ssh(@cmd_str, @cmd_input, @cmd_given_opts, @cmd_ssh_opts)
+      @runner.ssh(@task, @cmd_str, @cmd_input, @cmd_given_opts, @cmd_ssh_opts)
 
       exp = [@cmd_str, @cmd_ssh_opts]
       assert_equal exp, @remote_cmd_new_called_with

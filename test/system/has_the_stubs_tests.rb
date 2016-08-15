@@ -81,7 +81,7 @@ module Dk::HasTheStubs
       @with_input_cmd_stderr  = Factory.stderr
       @with_input_cmd_success = Factory.boolean
       @with_input_cmd_spy     = nil
-      @runner.send(method, @cmd_str, @cmd_input) do |spy|
+      @runner.send(method, @cmd_str, :input => @cmd_input) do |spy|
         spy.stdout          = @with_input_cmd_stdout
         spy.stderr          = @with_input_cmd_stderr
         spy.exitstatus      = @with_input_cmd_success ? 0 : 1
@@ -92,7 +92,7 @@ module Dk::HasTheStubs
       @with_opts_cmd_stderr  = Factory.stderr
       @with_opts_cmd_success = Factory.boolean
       @with_opts_cmd_spy     = nil
-      @runner.send(method, @cmd_str, @cmd_opts) do |spy|
+      @runner.send(method, @cmd_str, :opts => @cmd_opts) do |spy|
         spy.stdout         = @with_opts_cmd_stdout
         spy.stderr         = @with_opts_cmd_stderr
         spy.exitstatus     = @with_opts_cmd_success ? 0 : 1
@@ -103,7 +103,10 @@ module Dk::HasTheStubs
       @with_all_cmd_stderr  = Factory.stderr
       @with_all_cmd_success = Factory.boolean
       @with_all_cmd_spy     = nil
-      @runner.send(method, @cmd_str, @cmd_input, @cmd_opts) do |spy|
+      @runner.send(method, @cmd_str, {
+        :input => @cmd_input,
+        :opts  => @cmd_opts
+      }) do |spy|
         spy.stdout        = @with_all_cmd_stdout
         spy.stderr        = @with_all_cmd_stderr
         spy.exitstatus    = @with_all_cmd_success ? 0 : 1
@@ -190,40 +193,6 @@ module Dk::HasTheStubs
       end
     end
 
-    should "unstub specific cmd spies" do
-      @runner.unstub_cmd(@cmd_str)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,   task.only_cmd
-      assert_same @with_input_cmd_spy, task.with_input_cmd
-      assert_same @with_opts_cmd_spy,  task.with_opts_cmd
-      assert_same @with_all_cmd_spy,   task.with_all_cmd
-
-      @runner.unstub_cmd(@cmd_str, @cmd_input)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,       task.only_cmd
-      assert_not_same @with_input_cmd_spy, task.with_input_cmd
-      assert_same @with_opts_cmd_spy,      task.with_opts_cmd
-      assert_same @with_all_cmd_spy,       task.with_all_cmd
-
-      @runner.unstub_cmd(@cmd_str, @cmd_opts)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,       task.only_cmd
-      assert_not_same @with_input_cmd_spy, task.with_input_cmd
-      assert_not_same @with_opts_cmd_spy,  task.with_opts_cmd
-      assert_same @with_all_cmd_spy,       task.with_all_cmd
-
-      @runner.unstub_cmd(@cmd_str, @cmd_input, @cmd_opts)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,       task.only_cmd
-      assert_not_same @with_input_cmd_spy, task.with_input_cmd
-      assert_not_same @with_opts_cmd_spy,  task.with_opts_cmd
-      assert_not_same @with_all_cmd_spy,   task.with_all_cmd
-    end
-
     should "unstub all cmd spies" do
       @runner.unstub_all_cmds
       @params['use_bang'] = Factory.boolean
@@ -268,15 +237,23 @@ module Dk::HasTheStubs
       assert_true @with_opts_cmd_spy.run_called?
       assert_true @with_all_cmd_spy.run_called?
 
+      # ensure stubs can set stdout
+      assert_equal @only_cmd_stdout,       @only_cmd_spy.stdout
+      assert_equal @with_input_cmd_stdout, @with_input_cmd_spy.stdout
+      assert_equal @with_opts_cmd_stdout,  @with_opts_cmd_spy.stdout
+      assert_equal @with_all_cmd_stdout,   @with_all_cmd_spy.stdout
+
+      # ensure stubs can set stderr
+      assert_equal @only_cmd_stderr,       @only_cmd_spy.stderr
+      assert_equal @with_input_cmd_stderr, @with_input_cmd_spy.stderr
+      assert_equal @with_opts_cmd_stderr,  @with_opts_cmd_spy.stderr
+      assert_equal @with_all_cmd_stderr,   @with_all_cmd_spy.stderr
+
       # ensure stubs can set exitstatus
       assert_equal @only_cmd_success,       @only_cmd_spy.success?
       assert_equal @with_input_cmd_success, @with_input_cmd_spy.success?
       assert_equal @with_opts_cmd_success,  @with_opts_cmd_spy.success?
       assert_equal @with_all_cmd_success,   @with_all_cmd_spy.success?
-
-      # don't test stdout/stderr, they can't be read even though we set them,
-      # this tests that they can be set implicitly via in a stub via the
-      # `add_stubs` private method
     end
 
     should "allow stubbing `ssh!` calls" do
@@ -308,40 +285,6 @@ module Dk::HasTheStubs
       else
         assert_true task.with_all_cmd_failed
       end
-    end
-
-    should "unstub specific cmd spies" do
-      @runner.unstub_ssh(@cmd_str)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,   task.only_cmd
-      assert_same @with_input_cmd_spy, task.with_input_cmd
-      assert_same @with_opts_cmd_spy,  task.with_opts_cmd
-      assert_same @with_all_cmd_spy,   task.with_all_cmd
-
-      @runner.unstub_ssh(@cmd_str, @cmd_input)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,       task.only_cmd
-      assert_not_same @with_input_cmd_spy, task.with_input_cmd
-      assert_same @with_opts_cmd_spy,      task.with_opts_cmd
-      assert_same @with_all_cmd_spy,       task.with_all_cmd
-
-      @runner.unstub_ssh(@cmd_str, @cmd_opts)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,       task.only_cmd
-      assert_not_same @with_input_cmd_spy, task.with_input_cmd
-      assert_not_same @with_opts_cmd_spy,  task.with_opts_cmd
-      assert_same @with_all_cmd_spy,       task.with_all_cmd
-
-      @runner.unstub_ssh(@cmd_str, @cmd_input, @cmd_opts)
-      task = run_runner(@runner, @task_class, @params)
-
-      assert_not_same @only_cmd_spy,       task.only_cmd
-      assert_not_same @with_input_cmd_spy, task.with_input_cmd
-      assert_not_same @with_opts_cmd_spy,  task.with_opts_cmd
-      assert_not_same @with_all_cmd_spy,   task.with_all_cmd
     end
 
     should "unstub all cmd spies" do
