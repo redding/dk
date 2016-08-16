@@ -265,7 +265,7 @@ class Dk::Runner
       exp = "#{(run_time * 10_000).round / 10.0}ms"
       assert_equal exp, subject.pretty_run_time(run_time)
 
-      run_time = Factory.float (0.1) + 1.5
+      run_time = Factory.float(0.1) + 1.5
       exp = "#{run_time.to_i / 60}:#{(run_time.round % 60).to_i.to_s.rjust(2, '0')}s"
       assert_equal exp, subject.pretty_run_time(run_time)
     end
