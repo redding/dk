@@ -8,7 +8,7 @@ module Dk
 
   class CLI
 
-    DEFAULT_CONFIG_PATH = 'config/tasks.rb'.freeze
+    DEFAULT_CONFIG_PATH = 'config/dk.rb'.freeze
 
     def self.run(args)
       self.new.run(*args)

@@ -28,7 +28,7 @@ class Dk::CLI
       @kernel_spy = KernelSpy.new
 
       Dk.reset
-      ENV['DK_CONFIG'] = ROOT_PATH.join('test/support/config/tasks.rb').to_s
+      ENV['DK_CONFIG'] = ROOT_PATH.join('test/support/config/dk.rb').to_s
       @cli = Dk::CLI.new(@kernel_spy)
 
       null_logger = Dk::NullLogger.new

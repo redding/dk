@@ -28,7 +28,7 @@ end
 Now route this task with a name so it can be run from the CLI:
 
 ```ruby
-# in config/tasks.rb or whatever
+# in config/dk.rb or whatever
 require 'dk'
 
 Dk.configure do
@@ -196,7 +196,7 @@ Dk.configure do
 
   log_pattern '[%-5l] : %m\n' # [INFO] : blah blah\n"
 
-  log_file         "log/tasks.log"    # log all task run details to this file
+  log_file         "log/dk.log"       # log all task run details to this file
   log_file_pattern '[%d %-5l] : %m\n' # [<datetime> INFO] : blah blah\n"
 
 end
