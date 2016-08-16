@@ -261,12 +261,12 @@ class Dk::Runner
     end
 
     should "know how to format raw run times and make them 'pretty'" do
-      run_time = Factory.float(1.3)
+      run_time = Factory.float(1.5)
       exp = "#{(run_time * 10_000).round / 10.0}ms"
       assert_equal exp, subject.pretty_run_time(run_time)
 
-      run_time = Factory.float(10.0) + 1.3
-      exp = "#{run_time.to_i / 60}:#{(run_time % 60).to_i.to_s.rjust(2, '0')}s"
+      run_time = Factory.float (0.1) + 1.5
+      exp = "#{run_time.to_i / 60}:#{(run_time.round % 60).to_i.to_s.rjust(2, '0')}s"
       assert_equal exp, subject.pretty_run_time(run_time)
     end
 
