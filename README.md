@@ -640,6 +640,16 @@ test "my task should do something" do
 end
 ```
 
+## Dk 3rd-party gems
+
+These gems extend Dk for specific behavior:
+
+* [dk-pkg](https://github.com/redding/dk-pkg): Dk logic for installing pkgs
+* [dk-abdeploy](https://github.com/redding/dk-abdeploy): Dk tasks that implement the A/B deploy scheme
+* [dk-dumpdb](https://github.com/redding/dk-dumpdb): Build Dk tasks to dump and restore your databases
+
+(if you build your own gem that extends Dk, let us know and we'll link it here)
+
 ## Installation
 
 Add this line to your application's Gemfile:
