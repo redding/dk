@@ -303,6 +303,9 @@ class Dk::Runner
 
       @task   = Factory.string
       @runner = @runner_class.new(@runner_opts)
+
+      @pretty_run_time = Factory.string
+      Assert.stub(subject, :pretty_run_time){ @pretty_run_time }
     end
 
     should "build, log and run local cmds" do
@@ -322,6 +325,7 @@ class Dk::Runner
 
     def exp_log_output(cmd)
       ( ["INFO -- #{CMD_LOG_PREFIX}#{cmd.cmd_str}\n"] +
+        ["INFO -- #{INDENT_LOG_PREFIX}(#{@pretty_run_time})\n"] +
         cmd.output_lines.map do |ol|
           "DEBUG -- #{INDENT_LOG_PREFIX}#{CMD_SSH_OUT_LOG_PREFIX}#{ol.line}\n"
         end

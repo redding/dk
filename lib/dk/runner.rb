@@ -163,7 +163,8 @@ module Dk
 
     def log_local_cmd(cmd, &block)
       self.logger.info("#{CMD_LOG_PREFIX}#{cmd.cmd_str}")
-      block.call(cmd)
+      time = Benchmark.realtime{ block.call(cmd) }
+      self.logger.info("#{INDENT_LOG_PREFIX}(#{self.pretty_run_time(time)})")
       cmd.output_lines.each do |output_line|
         self.logger.debug("#{INDENT_LOG_PREFIX}#{CMD_SSH_OUT_LOG_PREFIX}#{output_line.line}")
       end
