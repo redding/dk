@@ -30,6 +30,7 @@ Now route this task with a name so it can be run from the CLI:
 ```ruby
 # in config/dk.rb or whatever
 require 'dk'
+require 'my_task'
 
 Dk.configure do
 
@@ -45,6 +46,8 @@ $ dk -T
 my-task # my task that does something great
 $ dk my-task
 ```
+
+See [dk-abdeploy](https://github.com/redding/dk-abdeploy#usage) for another example using Dk tasks to deploy code.
 
 ### CLI
 
