@@ -22,6 +22,6 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency("much-plugin", ["~> 0.2.0"])
   gem.add_dependency("scmd",        ["~> 3.0.3"])
-  gem.add_dependency("logsly",      ["~> 1.3.2"])
+  gem.add_dependency("logsly",      ["~> 1.3.3"])
 
 end
