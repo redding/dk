@@ -20,7 +20,8 @@ module Dk
     @config = Config.new
   end
 
-  NoticeError  = Class.new(RuntimeError)
-  NoParamError = Class.new(ArgumentError)
+  NoticeError     = Class.new(RuntimeError)
+  NoParamError    = Class.new(ArgumentError)
+  CmdTimeoutError = Class.new(RuntimeError)
 
 end

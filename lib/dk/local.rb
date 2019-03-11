@@ -16,13 +16,34 @@ module Dk::Local
 
     def to_s; self.cmd_str; end
 
+    def start(input = nil)
+      @scmd.start(input)
+      self
+    end
+
+    def wait(timeout = nil)
+      begin
+        @scmd.wait(timeout)
+      rescue Scmd::TimeoutError => e
+        raise Dk::CmdTimeoutError, e.message
+      end
+      self
+    end
+
+    def stop(timeout = nil)
+      @scmd.stop(timeout)
+      self
+    end
+
     def run(input = nil)
       @scmd.run(input)
       self
     end
 
+    def pid;      @scmd.pid;      end
     def stdout;   @scmd.stdout;   end
     def stderr;   @scmd.stderr;   end
+    def running?; @scmd.running?; end
     def success?; @scmd.success?; end
 
     def output_lines
@@ -65,6 +86,11 @@ module Dk::Local
       @cmd_opts = opts
     end
 
+    def start_input
+      return nil unless self.start_called?
+      self.start_calls.first.input
+    end
+
     def run_input
       return nil unless self.run_called?
       self.run_calls.first.input
@@ -73,6 +99,9 @@ module Dk::Local
     def stdout=(value);     @scmd.stdout     = value; end
     def stderr=(value);     @scmd.stderr     = value; end
     def exitstatus=(value); @scmd.exitstatus = value; end
+
+    def start_calls;   @scmd.start_calls;   end
+    def start_called?; @scmd.start_called?; end
 
     def run_calls;   @scmd.run_calls;   end
     def run_called?; @scmd.run_called?; end
