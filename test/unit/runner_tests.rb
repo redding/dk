@@ -56,7 +56,7 @@ class Dk::Runner
     should have_imeths :run, :run_task
     should have_imeths :log_info, :log_debug, :log_error
     should have_imeths :log_task_run, :log_cli_run
-    should have_imeths :cmd, :ssh
+    should have_imeths :start, :cmd, :ssh
     should have_imeths :has_run_task?, :pretty_run_time
 
     should "know its attrs" do
@@ -308,7 +308,20 @@ class Dk::Runner
       Assert.stub(subject, :pretty_run_time){ @pretty_run_time }
     end
 
-    should "build, log and run local cmds" do
+    should "build, log, and start local cmds" do
+      @runner.start(@task, @cmd_str, @cmd_input, @cmd_given_opts)
+
+      exp = [@cmd_str, @cmd_given_opts]
+      assert_equal exp, @local_cmd_new_called_with
+
+      assert_not_nil @local_cmd
+      assert_true @local_cmd.start_called?
+      assert_equal @cmd_input, @local_cmd.start_input
+
+      assert_equal exp_log_output(@local_cmd), @log_out
+    end
+
+    should "build, log, and run local cmds" do
       @runner.cmd(@task, @cmd_str, @cmd_input, @cmd_given_opts)
 
       exp = [@cmd_str, @cmd_given_opts]

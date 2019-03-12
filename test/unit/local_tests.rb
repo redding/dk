@@ -50,7 +50,7 @@ module Dk::Local
     end
 
     should have_readers :scmd, :cmd_str
-    should have_imeths :to_s, :run
+    should have_imeths :to_s, :start, :wait, :stop, :run
     should have_imeths :stdout, :stderr, :success?, :output_lines
 
     should "build an scmd with the cmd str and any given :env option" do
@@ -67,15 +67,56 @@ module Dk::Local
       assert_equal subject.cmd_str, subject.to_s
     end
 
-    should "demeter its scmd" do
+    should "demeter its scmd starts" do
+      assert_false @scmd_spy.start_called?
+
+      input = Factory.string
+      subject.start(input)
+      assert_true @scmd_spy.start_called?
+      assert_equal input, @scmd_spy.start_calls.last.input
+
+      wait_timeout = Factory.integer(10)
+      subject.wait(wait_timeout)
+      assert_true @scmd_spy.wait_called?
+      assert_equal wait_timeout, @scmd_spy.wait_calls.last.timeout
+
+      stop_timeout = Factory.integer(10)
+      subject.stop(stop_timeout)
+      assert_true @scmd_spy.stop_called?
+      assert_equal stop_timeout, @scmd_spy.stop_calls.last.timeout
+
+      assert_equal @scmd_spy.pid,      subject.pid
+      assert_equal @scmd_spy.stdout,   subject.stdout
+      assert_equal @scmd_spy.stderr,   subject.stderr
+      assert_equal @scmd_spy.running?, subject.running?
+      assert_equal @scmd_spy.success?, subject.success?
+    end
+
+    should "demeter its scmd timeout errors" do
+      scmd_timeout_error_message = Factory.string
+      Assert.stub(@scmd_spy, :wait) do
+        raise Scmd::TimeoutError, scmd_timeout_error_message
+      end
+
+      subject.start
+      wait_timeout = Factory.integer(10)
+      e = assert_raises { subject.wait(wait_timeout) }
+
+      assert_equal Dk::CmdTimeoutError, e.class
+      assert_equal scmd_timeout_error_message, e.message
+    end
+
+    should "demeter its scmd runs" do
       assert_false @scmd_spy.run_called?
       input = Factory.string
       subject.run(input)
       assert_true @scmd_spy.run_called?
       assert_equal input, @scmd_spy.run_calls.last.input
 
+      assert_equal @scmd_spy.pid,      subject.pid
       assert_equal @scmd_spy.stdout,   subject.stdout
       assert_equal @scmd_spy.stderr,   subject.stderr
+      assert_equal @scmd_spy.running?, subject.running?
       assert_equal @scmd_spy.success?, subject.success?
     end
 

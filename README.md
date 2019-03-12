@@ -314,6 +314,8 @@ Each callback can be optionally configured with a set of params.  Callbacks can 
 
 ##### `ssh_hosts`
 
+Use the `ssh_hosts` helper to set new ssh host lists values like you would on the main config:
+
 ```ruby
 require 'dk/task'
 
@@ -334,9 +336,11 @@ class MyTask
 end
 ```
 
-Use the `ssh_hosts` method to set new ssh host lists values like you would on the main config.  Any subsequent tasks that are run will have these ssh hosts available to their `ssh` commands.
+Any subsequent tasks that are run will have these ssh hosts available to their `ssh` commands.
 
 ##### `run_task`
+
+Use the `run_task` helper to run other tasks:
 
 ```ruby
 require 'dk/task'
@@ -356,9 +360,11 @@ class MyTask
 end
 ```
 
-Use the `run_task` helper to run other tasks.  This method takes an optional set of param values.  Any params given will be merged onto the global config params and made available to just the task being run.
+This method takes an optional set of param values.  Any params given will be merged onto the global config params and made available to just the task being run.
 
 ##### `cmd`, `cmd!`
+
+Use the `cmd` and `cmd!` helpers to run local system cmds:
 
 ```ruby
 require 'dk/task'
@@ -374,9 +380,54 @@ class MyTask
 end
 ```
 
-Use the `cmd` helper to run local system cmds.  Pass it a string system command to run and it runs it using [Scmd](https://github.com/redding/scmd).  You can [optionally pass in an `:env` param](https://github.com/redding/scmd#environment-variables) with any ENV vars that need to be set.  A `Dk::Local::Cmd` object is returned so you can access data such as the `stdout`, `stderr` and whether the command was successful or not.
+Pass them a string system command to run and it runs it using [Scmd](https://github.com/redding/scmd).  You can [optionally pass in an `:env` param](https://github.com/redding/scmd#environment-variables) with any ENV vars that need to be set.  A `Dk::Local::Cmd` object is returned so you can access data such as the `stdout`, `stderr` and whether the command was successful or not.
 
 The `cmd!` helper is identical to the `cmd` helper except that it raises a `Dk::Task::CmdRunError` if the command was not successful.
+
+##### `start`
+
+Use the `start` helper to asynchronously run a local system cmd:
+
+```ruby
+require 'dk/task'
+
+class MyTask
+  include Dk::Task
+
+  def run!
+    # run, but don't block waiting on an exitstatus
+    server_cmd = start "bin/server"
+
+    server_cmd.running?   # => true
+    server_cmd.pid        # => 12345
+    server_cmd.exitstatus # => nil
+
+    # do other stuff...
+
+    server_cmd.wait       # wait indefinitely until cmd exits
+    server_cmd.running?   # => false
+    server_cmd.pid        # => 12345
+    server_cmd.exitstatus # => 0
+  end
+
+end
+```
+
+OR, you can also asynchorously run with timeouts:
+
+```ruby
+# run, but don't block waiting on an exitstatus
+server_cmd = start "bin/server"
+
+begin
+  server_cmd.wait(10)
+rescue Dk::CmdTimeoutError => err
+  cmd.stop(10) # attempt to stop the cmd nicely, kill if doesn't stop in time
+  cmd.kill     # OR, just kill the cmd now
+end
+```
+
+This helper behaves just like `cmd` and `cmd!`. The only difference is it won't block waiting for the system command to run. It uses [Scmd](https://github.com/redding/scmd) to run system commmands and proxies most of its command API - see [the Scmd usage docs](https://github.com/redding/scmd#usage) for additional reference.
 
 ##### `ssh`, `ssh!`
 

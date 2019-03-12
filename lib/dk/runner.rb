@@ -109,12 +109,16 @@ module Dk
       self.logger.debug "===================================="
     end
 
-    def cmd(task, cmd_str, input, given_opts)
-      build_and_run_local_cmd(task, cmd_str, input, given_opts)
+    def start(*args)
+      build_and_start_local_cmd(*args)
     end
 
-    def ssh(task, cmd_str, input, given_opts, ssh_opts)
-      build_and_run_remote_cmd(task, cmd_str, input, given_opts, ssh_opts)
+    def cmd(*args)
+      build_and_run_local_cmd(*args)
+    end
+
+    def ssh(*args)
+      build_and_run_remote_cmd(*args)
     end
 
     def has_run_task?(task_class)
@@ -150,9 +154,17 @@ module Dk
       task_class.new(self, params)
     end
 
-    def build_and_run_local_cmd(task, cmd_str, input, given_opts)
+    def build_and_start_local_cmd(*args)
+      build_and_log_local_cmd(*args){ |cmd, input| cmd.start(input) }
+    end
+
+    def build_and_run_local_cmd(*args)
+      build_and_log_local_cmd(*args){ |cmd, input| cmd.run(input) }
+    end
+
+    def build_and_log_local_cmd(task, cmd_str, input, given_opts, &block)
       local_cmd = build_local_cmd(task, cmd_str, input, given_opts)
-      log_local_cmd(local_cmd){ |cmd| cmd.run(input) }
+      log_local_cmd(local_cmd){ |cmd| block.call(cmd, input) }
     end
 
     # input is needed for the `TestRunner` so it can use it with stubbing

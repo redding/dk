@@ -65,6 +65,12 @@ module Dk
         @dk_runner.run_task(task_class, params)
       end
 
+      def start(cmd_str, *args)
+        given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
+        input      = args.last
+        @dk_runner.start(self, cmd_str, input, given_opts)
+      end
+
       def cmd(cmd_str, *args)
         given_opts = args.last.kind_of?(::Hash) ? args.pop : nil
         input      = args.last

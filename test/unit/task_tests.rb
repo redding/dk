@@ -290,6 +290,38 @@ module Dk::Task
 
   end
 
+  class StartPrivateHelpersTests < InitTests
+
+    should "start local cmds, calling to the runner" do
+      runner_start_called_with = nil
+      Assert.stub(@runner, :start) do |*args|
+        runner_start_called_with = args
+        Assert.stub_send(@runner, :start, *args)
+      end
+
+      cmd_str   = Factory.string
+      cmd_input = Factory.string
+      cmd_opts  = { Factory.string => Factory.string }
+
+      subject.instance_eval{ start(cmd_str, cmd_input, cmd_opts) }
+      exp = [subject, cmd_str, cmd_input, cmd_opts]
+      assert_equal exp, runner_start_called_with
+
+      subject.instance_eval{ start(cmd_str) }
+      exp = [subject, cmd_str, nil, nil]
+      assert_equal exp, runner_start_called_with
+
+      subject.instance_eval{ start(cmd_str, cmd_input) }
+      exp = [subject, cmd_str, cmd_input, nil]
+      assert_equal exp, runner_start_called_with
+
+      subject.instance_eval{ start(cmd_str, cmd_opts) }
+      exp = [subject, cmd_str, nil, cmd_opts]
+      assert_equal exp, runner_start_called_with
+    end
+
+  end
+
   class CmdPrivateHelpersTests < InitTests
 
     should "run local cmds, calling to the runner" do
